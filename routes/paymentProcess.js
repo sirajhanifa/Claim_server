@@ -74,82 +74,70 @@ const router = express.Router();
 const claimEntry = require('../models/claimEntry');
 const nodemailer = require('nodemailer');
 
-
-
-// Setup transporter (use Gmail or any SMTP)
+// Email Setup
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  service: "gmail",
   auth: {
-    user: 'sirajhanifa786@gmail.com',
-    pass: 'exmp qlur pbvr uysn' // Use App Password if 2FA is enabled
+    user: "sirajhanifa786@gmail.com",
+    pass: "exmp qlur pbvr uysn"
   }
 });
 
-// Function to send email
-const sendCreditedEmail = async (recipientEmail, staffName, amount) => {
+const sendCreditedEmail = async (email, name, amount) => {
   const mailOptions = {
-    from: 'sirajhanifa786@gmail.com',
-    to: recipientEmail,
-    subject: '💰 Claim Credited Notification',
+    from: "sirajhanifa786@gmail.com",
+    to: email,
+    subject: "💰 Claim Credited Notification",
     text:'Test Notification for Claim Management System'
-    // text: `Dear ${staffName},\n\nYour claim of ₹${amount} has been successfully credited via NEFT.\n\nRegards,\nFinance Team\nJamal Mohamed College, Trichy`
-
+    // text: `Dear ${name},\n\nYour claim of ₹${amount} has been credited via NEFT.\n\nRegards,\nFinance Team`
   };
 
   await transporter.sendMail(mailOptions);
 };
 
-// ✅ Get all PR IDs with claim counts (only for claims submitted to Principal and not yet credited)
+// Get PR IDs
 router.get('/pr-ids', async (req, res) => {
   try {
-    const grouped = await claimEntry.aggregate([
+    const result = await claimEntry.aggregate([
       {
         $match: {
           payment_report_id: { $exists: true, $ne: null },
-          status: 'Submitted to Principal',
-          $or: [
-            { credited_date: { $exists: false } },
-            { credited_date: null }
-          ]
+          status: "Submitted to Principal",
+          $or: [{ credited_date: null }, { credited_date: { $exists: false } }]
         }
       },
       {
         $group: {
-          _id: '$payment_report_id',
+          _id: "$payment_report_id",
           count: { $sum: 1 }
         }
       },
       {
-        $project: {
-          payment_report_id: '$_id',
-          count: 1,
-          _id: 0
-        }
+        $project: { payment_report_id: "$_id", count: 1, _id: 0 }
       }
     ]);
 
-    res.json(grouped);
+    res.json(result);
   } catch (err) {
-    console.error('Error fetching filtered PR IDs:', err);
-    res.status(500).json({ error: 'Failed to fetch PR IDs' });
+    res.status(500).json({ error: "Failed to fetch PR IDs" });
   }
 });
 
-// ✅ Get claims by PR ID (only those submitted to Principal)
+// Get claims under PR ID
 router.get('/claims/:prId', async (req, res) => {
   try {
-    const claims = await claimEntry.find({
+    const list = await claimEntry.find({
       payment_report_id: req.params.prId,
-      status: 'Submitted to Principal'
+      status: "Submitted to Principal"
     });
-    res.json(claims);
+
+    res.json(list);
   } catch (err) {
-    console.error('Error fetching claims by PR ID:', err);
-    res.status(500).json({ error: 'Failed to fetch claims' });
+    res.status(500).json({ error: "Failed to fetch claims" });
   }
 });
 
-// ✅ Update credited date and remarks (and update status accordingly)
+// Update claim as credited
 router.put('/update/:id', async (req, res) => {
   try {
     const { credited_date, remarks } = req.body;
@@ -159,24 +147,19 @@ router.put('/update/:id', async (req, res) => {
       {
         credited_date,
         remarks,
-        status: credited_date ? 'Credited' : 'Submitted to Principal'
+        status: credited_date ? "Credited" : "Submitted to Principal"
       },
       { new: true }
     );
 
-    // Send email after update
-    if (updated.status === 'Credited' && updated.email) {
+    if (updated.status === "Credited" && updated.email) {
       await sendCreditedEmail(updated.email, updated.staff_name, updated.amount);
-      console.log("✅ Successfully sent email to", updated.email);
     }
-
 
     res.json(updated);
   } catch (err) {
-    console.error('Error updating claim:', err);
-    res.status(500).json({ error: 'Failed to update claim' });
+    res.status(500).json({ error: "Failed to update claim" });
   }
 });
-
 
 module.exports = router;
