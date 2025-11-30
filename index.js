@@ -10,6 +10,13 @@ require('dotenv').config({ quiet: true });
 // Initialize Express app
 const app = express();
 
+// Enable CORS for all origins
+app.use(cors({
+  origin: "*",
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+}));
+
 
 //Import Models
 require('./models/user')
@@ -35,8 +42,7 @@ connectDB();
 // Middleware
 app.use(express.json());
 
-// Enable CORS for all origins
-app.use(cors());
+
 
 
 // Set the routing

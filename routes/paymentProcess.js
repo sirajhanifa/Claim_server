@@ -97,6 +97,7 @@ const sendCreditedEmail = async (email, name, amount) => {
 
 // Get PR IDs
 router.get('/pr-ids', async (req, res) => {
+  // console.log("hanifa")
   try {
     const result = await claimEntry.aggregate([
       {
@@ -125,6 +126,7 @@ router.get('/pr-ids', async (req, res) => {
 
 // Get claims under PR ID
 router.get('/claims/:prId', async (req, res) => {
+  // console.log("siraj")
   try {
     const list = await claimEntry.find({
       payment_report_id: req.params.prId,
