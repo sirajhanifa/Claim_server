@@ -171,7 +171,7 @@ router.post('/calculateAmount', async (req, res) => {
           tax_applicable          // from form.tax_type
         } = req.body;
 
-        console.log("✅ Practical Claim Body:", req.body);
+        // console.log("✅ Practical Claim Body:", req.body);
 
         if (
           isNaN(no_of_qps) ||
@@ -186,11 +186,15 @@ router.post('/calculateAmount', async (req, res) => {
         const studentCount = parseInt(total_no_student);
         const haltDays = parseInt(no_of_days_halted);
 
-        const qpsRate =
-          qpsCount === 1
-            ? settings.qps_single_rate || 0
-            : settings.qps_multiple_rate || 0;
+        // ✅ QPS Rate Logic from backend settings
+        let qpsRate = 0;
+        if (qpsCount === 1) {
+          qpsRate = settings.qps_single_rate || 0;   // e.g. 120 from DB
+        } else if (qpsCount > 1) {
+          qpsRate = qpsCount * (settings.qps_multiple_rate || 0); // e.g. 5 * 100
+        }
 
+        // ✅ Student Rate Logic
         const studentRate =
           degree_level === 'UG'
             ? settings.ug_student_rate || 0
@@ -204,14 +208,18 @@ router.post('/calculateAmount', async (req, res) => {
         const haltAmount = haltRate * haltDays;
 
         const total = qpsRate + studentAmount + haltAmount;
+
+        // ✅ Tax logic (10% only if Aided)
         const tax = tax_applicable === 'Aided' ? total * 0.1 : 0;
 
         amount = total - tax;
 
-        console.log("✅ Calculated Practical Exam Amount:", amount);
+        // console.log("✅ Calculated Practical Exam Amount:", amount);
 
         return res.status(200).json({ amount });
       }
+
+
 
       // 🔷 Ability Enhancement Claim
       case 'ABILITY ENHANCEMENT CLAIM': {
