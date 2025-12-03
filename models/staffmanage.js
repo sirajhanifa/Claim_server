@@ -1,14 +1,10 @@
-
-
-
-
 const mongoose= require('mongoose')
 
 const staffSchema = new mongoose.Schema({
     staff_id:{type:String,required:false},
     staff_name:{type:String,required:true},
     department:{type:String,required:true},
-    designation:{type:String,required:true},
+    designation:{type:String,required:false},
     category:{type:String,required:false},
     phone_no:{type:Number,required:true,unique:true},
     email:{type:String,required:true},

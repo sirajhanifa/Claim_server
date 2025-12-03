@@ -1,3 +1,5 @@
+
+
 const express = require('express');
 const multer = require('multer');
 const XLSX = require('xlsx');
@@ -114,33 +116,39 @@ router.post('/', async (req, res) => {
 });
 
 // UPDATE staff by staff_id
-router.put('/edit/:staff_id', async (req, res) => {
+router.put('/update/:id', async (req, res) => {
   try {
-    const updated = await Staff.findOneAndUpdate(
-      { staff_id: req.params.staff_id },
+    const updated = await Staff.findByIdAndUpdate(
+      req.params.id,
       req.body,
       { new: true }
     );
 
-    if (!updated) return res.status(404).json({ error: 'Staff not found' });
-    res.json({ message: 'Staff updated successfully', updated });
+    if (!updated) {
+      return res.status(404).json({ error: "Staff not found" });
+    }
+
+    res.json({ message: "Staff updated successfully", updated });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to update staff' });
+    console.error("Update error:", err);
+    res.status(500).json({ error: "Failed to update staff" });
   }
 });
+;
 
 // DELETE staff by staff_id
-router.delete('/delete/:staff_id', async (req, res) => {
+router.delete('/delete/:id', async (req, res) => {
   try {
-    const deleted = await Staff.findOneAndDelete({ staff_id: req.params.staff_id });
+    const deleted = await Staff.findByIdAndDelete(req.params.id);
 
     if (!deleted) return res.status(404).json({ error: 'Staff not found' });
 
     res.status(200).json({ message: 'Staff deleted successfully' });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: 'Failed to delete staff' });
   }
 });
 
-module.exports = router;
 
+module.exports = router;
