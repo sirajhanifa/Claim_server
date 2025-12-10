@@ -12,8 +12,7 @@ const staffSchema = new mongoose.Schema({
     bank_acc_no:{type:String,required:true,unique:true},
     ifsc_code:{type:String,required:true},
     employment_type:{type:String,required:true},
-    bank_name:{type:String,required:true},
-    branch_name:{type:String,required:true}
+    bank_name:{type:String,required:false},
 })
 
 const Staff = mongoose.model('staff_manage',staffSchema)
