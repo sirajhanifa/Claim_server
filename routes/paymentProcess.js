@@ -88,8 +88,8 @@ const sendCreditedEmail = async (email, name, amount) => {
     from: "sirajhanifa786@gmail.com",
     to: email,
     subject: "💰 Claim Credited Notification",
-    text:'Test Notification for Claim Management System'
-    // text: `Dear ${name},\n\nYour claim of ₹${amount} has been credited via NEFT.\n\nRegards,\nFinance Team`
+    // text:'Test Notification for Claim Management System'
+    text: `Dear ${name},\n\nYour claim of ₹${amount} has been credited via NEFT.\n\nRegards,\nFinance Team\n\n(This is an automated message. Please do not reply.)`
   };
 
   await transporter.sendMail(mailOptions);
