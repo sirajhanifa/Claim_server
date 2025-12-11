@@ -9,6 +9,22 @@ const { getClaim } = require('../controller/claimReportController');
 router.get('/getclaimEntry', getClaim)
 
 
+// DELETE CLAIM
+router.delete("/delete/:id", async (req, res) => {
+  try {
+    const deleted = await ClaimEntry.findByIdAndDelete(req.params.id);
+
+    if (!deleted) {
+      return res.status(404).json({ message: "Claim not found" });
+    }
+
+    return res.json({ message: "Claim deleted successfully" });
+  } catch (err) {
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
+
 // routes/claimReportRoutes.js
 router.put('/submitClaims', async (req, res) => {
   try {
@@ -39,7 +55,12 @@ router.put('/submitClaims', async (req, res) => {
       }
     );
 
-    return res.status(200).json({ message: 'Claims submitted successfully', prId });
+    return res.status(200).json({
+      message: 'Claims submitted successfully',
+      prId,
+      submission_date: today   // ✅ add this
+    });
+
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Internal Server Error' });
