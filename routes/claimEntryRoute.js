@@ -5,6 +5,37 @@ const Staff = require('../models/staffmanage');
 const ClaimEntry = require('../models/claimEntry');
 const ClaimType = require('../models/claimtype')
 
+
+// 📌 Search phone numbers by partial match
+router.get('/search-phone/:prefix', async (req, res) => {
+  try {
+    let prefix = req.params.prefix;
+
+    // If empty, return nothing
+    if (!prefix) return res.json([]);
+
+    // Convert prefix to number
+    const start = Number(prefix + "0".repeat(10 - prefix.length));
+    const end = Number(prefix + "9".repeat(10 - prefix.length));
+
+    const staff = await Staff.find(
+      {
+        phone_no: { $gte: start, $lte: end }
+      },
+      { phone_no: 1, _id: 0 }
+    )
+      .limit(10)
+      .sort({ phone_no: 1 });
+
+    res.json(staff);
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ message: "Error fetching phone suggestions" });
+  }
+});
+
+
 // GET staff details by phone
 router.get('/getStaffByPhone/:phone', async (req, res) => {
   try {
