@@ -28,12 +28,17 @@ router.delete("/delete/:id", async (req, res) => {
 // routes/claimReportRoutes.js
 router.put('/submitClaims', async (req, res) => {
   try {
-    const { claimType } = req.body;
+    const { claimType,category } = req.body;
     const today = new Date();
 
     const baseFilter = { $or: [{ submission_date: null }, { submission_date: '' }] };
     if (claimType && claimType !== 'all') {
       baseFilter.claim_type_name = claimType;
+    }
+
+    // Category filter (INTERNAL / EXTERNAL)
+    if (category && category !== 'all') {
+      baseFilter.internal_external = category;
     }
 
     const unsubmittedClaims = await ClaimEntry.find(baseFilter);
