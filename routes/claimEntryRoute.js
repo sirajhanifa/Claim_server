@@ -160,37 +160,67 @@ router.post('/calculateAmount', async (req, res) => {
         return res.status(200).json({ amount });
       }
 
-      // 🔷 Central Valuation Claim
       case 'CENTRAL VALUATION': {
         const {
-          total_scripts,
-          days_halted,
-          travel_allowance,
-          tax_applicable
+          central_total_scripts_ug,
+          central_total_scripts_pg,
+          central_days_halted,
+          central_travel_allowance,
+          central_tax_applicable
         } = req.body;
 
+        const ugScripts = Number(central_total_scripts_ug || 0);
+        const pgScripts = Number(central_total_scripts_pg || 0);
+        const daysHalted = Number(central_days_halted || 0);
+        const travelAllowance = Number(central_travel_allowance || 0);
+
         if (
-          isNaN(total_scripts) ||
-          isNaN(days_halted) ||
-          isNaN(travel_allowance)
+          isNaN(ugScripts) ||
+          isNaN(pgScripts) ||
+          isNaN(daysHalted) ||
+          isNaN(travelAllowance)
         ) {
-          return res.status(400).json({ message: 'Missing or invalid Central Valuation inputs' });
+          return res.status(400).json({
+            message: 'Invalid Central Valuation inputs'
+          });
         }
 
-        const scriptRate = settings.script_rate || 0;
+        // ✅ Separate rates
+        const ugRate = settings.ug_script_rate || 0;
+        const pgRate = settings.pg_script_rate || 0;
         const haltRate = settings.halt_day_rate || 0;
 
-        const totalScriptsAmount = scriptRate * parseInt(total_scripts);
-        const haltAmount = haltRate * parseInt(days_halted);
-        const travelAmount = parseFloat(travel_allowance);
+        // ✅ Calculations
+        const ugAmount = ugScripts * ugRate;
+        const pgAmount = pgScripts * pgRate;
+        const haltAmount = daysHalted * haltRate;
 
-        const total = totalScriptsAmount + haltAmount + travelAmount;
-        const tax = tax_applicable?.toLowerCase() === 'aided' ? total * 0.1 : 0;
+        const total = ugAmount + pgAmount + haltAmount + travelAllowance;
+
+        const tax =
+          central_tax_applicable?.toLowerCase() === 'aided'
+            ? total * (settings.tax_rate || 0.1)
+            : 0;
 
         amount = total - tax;
 
-        return res.status(200).json({ amount });
+        return res.status(200).json({
+          amount,
+          breakdown: {
+            ugScripts,
+            ugRate,
+            ugAmount,
+            pgScripts,
+            pgRate,
+            pgAmount,
+            haltAmount,
+            travelAllowance,
+            tax
+          }
+        });
       }
+
+
 
       // 🔷 Practical Exam Claim
       case 'PRACTICAL EXAM CLAIM': {
@@ -282,7 +312,7 @@ router.post('/calculateAmount', async (req, res) => {
             ? baseAmount * (taxPercent / 100)
             : 0;
 
-        amount = baseAmount + tax;
+        amount = baseAmount - tax;
 
         return res.status(200).json({ amount });
       }
