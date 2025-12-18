@@ -160,65 +160,45 @@ router.post('/calculateAmount', async (req, res) => {
         return res.status(200).json({ amount });
       }
 
+      // CENTRAL VALUATION
       case 'CENTRAL VALUATION': {
         const {
           central_total_scripts_ug,
           central_total_scripts_pg,
-          central_days_halted,
           central_travel_allowance,
           central_tax_applicable
         } = req.body;
 
         const ugScripts = Number(central_total_scripts_ug || 0);
         const pgScripts = Number(central_total_scripts_pg || 0);
-        const daysHalted = Number(central_days_halted || 0);
         const travelAllowance = Number(central_travel_allowance || 0);
 
-        if (
-          isNaN(ugScripts) ||
-          isNaN(pgScripts) ||
-          isNaN(daysHalted) ||
-          isNaN(travelAllowance)
-        ) {
-          return res.status(400).json({
-            message: 'Invalid Central Valuation inputs'
-          });
+        if ([ugScripts, pgScripts, travelAllowance].some(isNaN)) {
+          return res.status(400).json({ message: 'Invalid Central Valuation inputs' });
         }
 
-        // ✅ Separate rates
+        // Rates from settings
         const ugRate = settings.ug_script_rate || 0;
         const pgRate = settings.pg_script_rate || 0;
-        const haltRate = settings.halt_day_rate || 0;
 
-        // ✅ Calculations
+        // Base calculations (UG + PG + Travel)
         const ugAmount = ugScripts * ugRate;
         const pgAmount = pgScripts * pgRate;
-        const haltAmount = daysHalted * haltRate;
+        const baseAmount = ugAmount + pgAmount + travelAllowance;
 
-        const total = ugAmount + pgAmount + haltAmount + travelAllowance;
-
-        const tax =
-          central_tax_applicable?.toLowerCase() === 'aided'
-            ? total * (settings.tax_rate || 0.1)
+        // Send tax % to frontend
+        const taxPercent =
+          central_tax_applicable?.toUpperCase() === 'AIDED'
+            ? settings.tax_rate || 0
             : 0;
 
-        amount = total - tax;
-
         return res.status(200).json({
-          amount,
-          breakdown: {
-            ugScripts,
-            ugRate,
-            ugAmount,
-            pgScripts,
-            pgRate,
-            pgAmount,
-            haltAmount,
-            travelAllowance,
-            tax
-          }
+          baseAmount,    // frontend will add DA
+          taxPercent,
+          breakdown: { ugAmount, pgAmount, travelAllowance }
         });
       }
+
 
 
 
@@ -228,11 +208,9 @@ router.post('/calculateAmount', async (req, res) => {
           no_of_qps,              // from form.qps_paper_setting
           total_no_student,       // from form.total_students
           degree_level,           // UG / PG
-          no_of_days_halted,      // from form.days_halted
+          no_of_days_halted,      // used for validation
           tax_applicable          // from form.tax_type
         } = req.body;
-
-        // console.log("✅ Practical Claim Body:", req.body);
 
         if (
           isNaN(no_of_qps) ||
@@ -240,19 +218,20 @@ router.post('/calculateAmount', async (req, res) => {
           isNaN(no_of_days_halted) ||
           !degree_level
         ) {
-          return res.status(400).json({ message: 'Missing or invalid Practical Exam inputs' });
+          return res.status(400).json({
+            message: 'Missing or invalid Practical Exam inputs'
+          });
         }
 
         const qpsCount = parseInt(no_of_qps);
         const studentCount = parseInt(total_no_student);
-        const haltDays = parseInt(no_of_days_halted);
 
-        // ✅ QPS Rate Logic from backend settings
+        // ✅ QPS Rate Logic
         let qpsRate = 0;
         if (qpsCount === 1) {
-          qpsRate = settings.qps_single_rate || 0;   // e.g. 120 from DB
+          qpsRate = settings.qps_single_rate || 0;
         } else if (qpsCount > 1) {
-          qpsRate = qpsCount * (settings.qps_multiple_rate || 0); // e.g. 5 * 100
+          qpsRate = qpsCount * (settings.qps_multiple_rate || 0);
         }
 
         // ✅ Student Rate Logic
@@ -263,22 +242,25 @@ router.post('/calculateAmount', async (req, res) => {
               ? settings.pg_student_rate || 0
               : 0;
 
-        const haltRate = settings.halt_day_rate || 0;
-
         const studentAmount = studentRate * studentCount;
-        const haltAmount = haltRate * haltDays;
 
-        const total = qpsRate + studentAmount + haltAmount;
+        // ✅ BASE AMOUNT (without DA)
+        const baseAmount = qpsRate + studentAmount;
 
-        // ✅ Tax logic (10% only if Aided)
-        const tax = tax_applicable === 'Aided' ? total * 0.1 : 0;
+        // ✅ Tax % from backend settings
+        const taxPercent =
+          tax_applicable?.toUpperCase() === 'AIDED'
+            ? settings.tax_percentage || 0
+            : 0;
 
-        amount = total - tax;
-
-        // console.log("✅ Calculated Practical Exam Amount:", amount);
-
-        return res.status(200).json({ amount });
+        // ✅ Return both baseAmount and taxPercent to frontend
+        return res.status(200).json({
+          baseAmount,
+          taxPercent
+        });
       }
+
+
 
 
 
@@ -286,36 +268,34 @@ router.post('/calculateAmount', async (req, res) => {
       case 'ABILITY ENHANCEMENT CLAIM': {
         const {
           ability_total_no_students,
-          ability_no_of_days_halted,
           ability_tax_type
         } = req.body;
 
-        if (
-          isNaN(ability_total_no_students) ||
-          isNaN(ability_no_of_days_halted)
-        ) {
-          return res.status(400).json({ message: 'Missing or invalid Ability Enhancement inputs' });
+        if (isNaN(ability_total_no_students)) {
+          return res.status(400).json({
+            message: 'Invalid Ability Enhancement inputs'
+          });
         }
 
         const studentCount = parseInt(ability_total_no_students);
-        const haltDays = parseInt(ability_no_of_days_halted);
-
         const studentRate = settings.student_rate || 0;
-        const haltRate = settings.halted_day_rate || 0;
-        const taxPercent = settings.tax_percentage || 0;
 
-        const baseAmount = (studentRate * studentCount) + (haltRate * haltDays);
+        // ✅ BASE AMOUNT ONLY
+        const baseAmount = studentRate * studentCount;
 
-        // ✅ Apply tax only if type is AIDED
-        const tax =
-          ability_tax_type?.toUpperCase() === 'AIDED' && taxPercent > 0
-            ? baseAmount * (taxPercent / 100)
+        // ✅ TAX % FROM SETTINGS (NOT APPLIED HERE)
+        const taxPercent =
+          ability_tax_type?.toUpperCase() === 'AIDED'
+            ? settings.tax_percentage || 0
             : 0;
 
-        amount = baseAmount - tax;
-
-        return res.status(200).json({ amount });
+        return res.status(200).json({
+          baseAmount,
+          taxPercent
+        });
       }
+
+
 
 
 
