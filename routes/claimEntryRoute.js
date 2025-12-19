@@ -138,27 +138,30 @@ router.post('/calculateAmount', async (req, res) => {
 
       // 🔷 Scrutiny Claim
       case 'SCRUTINY CLAIM': {
-        const { scrutiny_level, scrutiny_no_of_papers, scrutiny_days } = req.body;
+        // Case: SCRUTINY CLAIM
+        const { no_of_ug_papers, no_of_pg_papers } = req.body;
 
-        if (!scrutiny_level || isNaN(scrutiny_no_of_papers) || isNaN(scrutiny_days)) {
-          return res.status(400).json({ message: 'Missing scrutiny level, papers, or days' });
+        // Ensure the inputs are numbers
+        const ugPapers = parseInt(no_of_ug_papers) || 0;
+        const pgPapers = parseInt(no_of_pg_papers) || 0;
+
+        // Validation: at least one paper must be provided
+        if (ugPapers === 0 && pgPapers === 0) {
+          return res.status(400).json({ message: "Missing number of papers" });
         }
 
-        const paperRate =
-          scrutiny_level === 'UG'
-            ? settings.scrutiny_ug_rate || 0
-            : scrutiny_level === 'PG'
-              ? settings.scrutiny_pg_rate || 0
-              : 0;
+        // Rates from settings (ensure they are numbers)
+        const ugRate = Number(settings.scrutiny_ug_rate) || 0;
+        const pgRate = Number(settings.scrutiny_pg_rate) || 0;
 
-        const dayRate = settings.scrutiny_day_rate || 0;
+        // Calculate amount
+        const amount = ugPapers * ugRate + pgPapers * pgRate;
 
-        amount =
-          paperRate * parseInt(scrutiny_no_of_papers) +
-          dayRate * parseInt(scrutiny_days);
-
+        // Return result
         return res.status(200).json({ amount });
+
       }
+
 
       // CENTRAL VALUATION
       case 'CENTRAL VALUATION': {
