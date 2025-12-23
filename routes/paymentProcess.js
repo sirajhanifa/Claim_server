@@ -78,14 +78,14 @@ const nodemailer = require('nodemailer');
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: "sirajhanifa786@gmail.com",
-    pass: "exmp qlur pbvr uysn"
+    user: "jmccoeclaim@gmail.com",
+    pass: "wzrf dhdt ltkx mfjj"
   }
 });
 
 const sendCreditedEmail = async (email, name, amount) => {
   const mailOptions = {
-    from: "sirajhanifa786@gmail.com",
+    from: "jmccoeclaim@gmail.com",
     to: "abdulrasak4567@gmail.com",
     subject: "💰 Claim Credited Notification",
     // text:'Test Notification for Claim Management System'
