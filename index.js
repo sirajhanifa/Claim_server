@@ -5,7 +5,7 @@ const cors = require('cors');
 
 
 // Load environment variables
-require('dotenv').config({ quiet: true });
+require('dotenv').config({quiet: true});
 
 // Initialize Express app
 const app = express();
