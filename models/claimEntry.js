@@ -7,6 +7,8 @@ const claimEntrySchema = new mongoose.Schema({
   department: { type: String, required: true },
   designation: { type: String, required: true },
   internal_external: { type: String, required: true },
+  category: { type: String, required: false },
+  college: { type: String, required: false },
   phone_number: { type: String, required: true },
   email: { type: String, required: true },
   entry_date: { type: Date, required: true },

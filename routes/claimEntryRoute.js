@@ -50,6 +50,8 @@ router.get('/getStaffByPhone/:phone', async (req, res) => {
       department: staff.department,
       designation: staff.designation,
       employment_type: staff.employment_type,
+      category: staff.category || '',
+      college: staff.college || '',
       email: staff.email,
       bank_name: staff.bank_name,
       branch_name: staff.branch_name,
