@@ -35,6 +35,8 @@ const cliamReport = require('./routes/claimReport')
 const Setting = require('./routes/settingRoute')
 const Dashboard = require('./routes/dashboardRoute')
 const PaymentProcess = require('./routes/paymentProcess')
+const adminPaymentStatusRoutes  = require("./routes/adminPaymentStatus")
+const adminMaintenanceRoutes = require("./routes/adminMaintenanceRoutes")
 
 // Connect to MongoDB
 connectDB();
@@ -54,6 +56,8 @@ app.use('/api', cliamReport)
 app.use('/api', Setting)
 app.use('/api', Dashboard)
 app.use('/api/finance', PaymentProcess)
+app.use('/api/admin/payment-status', adminPaymentStatusRoutes);
+app.use("/api/admin/maintenance", adminMaintenanceRoutes);
 
 
 

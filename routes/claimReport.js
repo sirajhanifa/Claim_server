@@ -28,7 +28,7 @@ router.delete("/delete/:id", async (req, res) => {
 // routes/claimReportRoutes.js
 router.put('/submitClaims', async (req, res) => {
   try {
-    const { claimType,category } = req.body;
+    const { claimType, category } = req.body;
     const today = new Date();
 
     const baseFilter = { $or: [{ submission_date: null }, { submission_date: '' }] };
@@ -46,7 +46,13 @@ router.put('/submitClaims', async (req, res) => {
       return res.status(200).json({ message: 'No unsubmitted claims found.' });
     }
 
-    const totalSubmitted = await ClaimEntry.countDocuments({ submission_date: { $ne: null } });
+    const year = today.getFullYear();
+
+    const totalSubmitted = await ClaimEntry.countDocuments({
+      submission_date: { $ne: null },
+      payment_report_id: { $regex: `^PR-${year}-` }
+    });
+
     const prId = `PR-${today.getFullYear()}-${String(totalSubmitted + 1).padStart(3, '0')}`;
 
     await ClaimEntry.updateMany(
