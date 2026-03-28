@@ -1,6 +1,7 @@
 const express = require('express');
 const connectDB = require('./config/db');
 const cors = require('cors');
+const mongoose = require("mongoose")
 
 
 
@@ -43,6 +44,13 @@ connectDB();
 
 // Middleware
 app.use(express.json());
+
+// mongoose.connection.once('open', async () => {
+//   const Staff = require('./models/staffmanage');
+//   await Staff.deleteMany({});
+//   console.log("✅ Staff records cleared");
+// });
+
 
 
 

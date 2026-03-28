@@ -108,8 +108,20 @@ router.get('/pr-ids', async (req, res) => {
         }
       },
       {
+        // Deduplicate by the same merge key used in the frontend
         $group: {
-          _id: "$payment_report_id",
+          _id: {
+            payment_report_id: "$payment_report_id",
+            staff_name: "$staff_name",
+            phone_number: "$phone_number",
+            claim_type_name: "$claim_type_name"
+          }
+        }
+      },
+      {
+        // Count unique groups per PR ID
+        $group: {
+          _id: "$_id.payment_report_id",
           count: {$sum: 1}
         }
       },
