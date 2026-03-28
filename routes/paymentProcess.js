@@ -108,25 +108,27 @@ router.get('/pr-ids', async (req, res) => {
         }
       },
       {
-        // Deduplicate by the same merge key used in the frontend
+        // Deduplicate by the same merge key used in the frontend, sum amounts within each group
         $group: {
           _id: {
             payment_report_id: "$payment_report_id",
             staff_name: "$staff_name",
             phone_number: "$phone_number",
             claim_type_name: "$claim_type_name"
-          }
+          },
+          groupAmount: {$sum: {$toDouble: "$amount"}}
         }
       },
       {
-        // Count unique groups per PR ID
+        // Count unique groups and total amount per PR ID
         $group: {
           _id: "$_id.payment_report_id",
-          count: {$sum: 1}
+          count: {$sum: 1},
+          totalAmount: {$sum: "$groupAmount"}
         }
       },
       {
-        $project: {payment_report_id: "$_id", count: 1, _id: 0}
+        $project: {payment_report_id: "$_id", count: 1, totalAmount: 1, _id: 0}
       }
     ]);
 
