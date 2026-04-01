@@ -83,13 +83,12 @@ const transporter = nodemailer.createTransport({
   }
 });
 
-const sendCreditedEmail = async (email, name, amount) => {
+const sendCreditedEmail = async (email, name, amount, claimType) => {
   const mailOptions = {
     from: "jmccoeclaim@gmail.com",
     to: email,
-    subject: "💰 Claim Credited Notification",
-    // text:'Test Notification for Claim Management System'
-    text: `Dear ${name},\n\nYour claim of ₹${amount} has been credited via NEFT.\n\nRegards,\nFinance Team\n\n(This is an automated message. Please do not reply.)`
+    subject: "Claim Credited Notification",
+    text: `Dear ${name},\n\nWe are pleased to inform you that your claim amount of Rs. ${amount} has been credited to your bank account towards ${claimType}.\n\nController of Examinations\nJamal Mohamed College`
   };
 
   await transporter.sendMail(mailOptions);
@@ -169,7 +168,7 @@ router.put('/update/:id', async (req, res) => {
     );
 
     if (updated.status === "Credited" && updated.email) {
-      await sendCreditedEmail(updated.email, updated.staff_name, updated.amount);
+      await sendCreditedEmail(updated.email, updated.staff_name, updated.amount, updated.claim_type_name);
     }
 
     res.json(updated);
@@ -217,7 +216,7 @@ router.put('/update-multiple', async (req, res) => {
 
       if (updated && updated.status === "Credited" && updated.email) {
         try {
-          await sendCreditedEmail(updated.email, updated.staff_name, updated.amount);
+          await sendCreditedEmail(updated.email, updated.staff_name, updated.amount, updated.claim_type_name);
         } catch (emailErr) {
           console.error("Failed to send email for claim", updated._id, emailErr);
         }

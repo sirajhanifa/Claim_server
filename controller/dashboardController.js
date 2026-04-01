@@ -170,4 +170,28 @@ const getInternalExternalClaims = async (req, res) => {
 
 
 
-module.exports = { getClaimCount, getStaffCount, getCreditedClaims, getPendingClaims, getAwaitingClaims, getInternalExternalClaims };
+const getClaimTypeAmounts = async (req, res) => {
+  try {
+    const result = await Claim.aggregate([
+      {
+        $group: {
+          _id: "$claim_type_name",
+          totalAmount: { $sum: "$amount" }
+        }
+      },
+      { $sort: { totalAmount: -1 } }
+    ]);
+
+    const data = result.map(r => ({
+      name: r._id,
+      amount: r.totalAmount
+    }));
+
+    res.status(200).json(data);
+  } catch (error) {
+    console.error("Error fetching claim type amounts:", error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+module.exports = { getClaimCount, getStaffCount, getCreditedClaims, getPendingClaims, getAwaitingClaims, getInternalExternalClaims, getClaimTypeAmounts };
