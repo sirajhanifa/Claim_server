@@ -15,7 +15,4 @@ const staffSchema = new mongoose.Schema({
     bank_name:{type:String,required:false},
 })
 
-const Staff = mongoose.model('staff_manage',staffSchema)
-
-module.exports = Staff
-
+module.exports = mongoose.model('staff_manage',staffSchema)
