@@ -8,7 +8,7 @@ const getClaimCount = async (req, res) => {
                 $group: {
                     _id: null,
                     totalClaims: { $sum: 1 },
-                    totalAmount: { $sum: '$amount' } 
+                    totalAmount: { $sum: '$amount' }
                 }
             }
         ]);
@@ -58,7 +58,7 @@ const getCreditedClaims = async (req, res) => {
     try {
         const result = await Claim.aggregate([
             {
-                $match: { status: "Credited" }  
+                $match: { status: "Credited" }
             },
             {
                 $group: {
@@ -111,7 +111,7 @@ const getPendingClaims = async (req, res) => {
     try {
         const result = await Claim.aggregate([
             {
-                $match: { status: "Pending" } 
+                $match: { status: "Pending" }
             },
             {
                 $group: {
@@ -121,7 +121,6 @@ const getPendingClaims = async (req, res) => {
                 }
             }
         ]);
-
         const { pendingClaims, pendingAmount } =
             result[0] || { pendingClaims: 0, pendingAmount: 0 };
 
@@ -134,15 +133,9 @@ const getPendingClaims = async (req, res) => {
 
 const getAwaitingClaims = async (req, res) => {
     try {
-        const sevenDaysAgo = new Date();
-        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-
         const result = await Claim.aggregate([
             {
-                $match: {
-                    status: { $ne: "Credited" },      
-                    entry_date: { $lte: sevenDaysAgo } 
-                }
+                $match: { status: "Submitted to Principal" }
             },
             {
                 $group: {
@@ -155,7 +148,6 @@ const getAwaitingClaims = async (req, res) => {
 
         const { awaitingClaims, awaitingAmount } =
             result[0] || { awaitingClaims: 0, awaitingAmount: 0 };
-
         res.status(200).json({ awaitingClaims, awaitingAmount });
     } catch (error) {
         console.error("Error fetching awaiting claims:", error);
