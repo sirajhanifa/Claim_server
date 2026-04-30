@@ -2,7 +2,8 @@ const express = require('express');
 const router = express.Router();
 const Staff = require('../models/staffmanage');
 const ClaimEntry = require('../models/claimEntry');
-const ClaimType = require('../models/claimtype')
+const ClaimType = require('../models/claimtype');
+const Academic = require('../models/academic')
 
 // -----------------------------------------------------------------------------------------------
 
@@ -76,7 +77,9 @@ router.get('/getStaffByPhone/:phone', async (req, res) => {
 
 router.post('/postClaim', async (req, res) => {
 	try {
-		const claim = new ClaimEntry(req.body);
+		const active_academic = await Academic.findOne({ active_sem: true });
+		const { academic_sem_label } = active_academic;
+		const claim = new ClaimEntry({ ...req.body, academic_sem_label });
 		await claim.save();
 		res.status(201).json({ message: "Claim saved" });
 	} catch (err) {

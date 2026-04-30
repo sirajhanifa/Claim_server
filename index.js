@@ -2,7 +2,6 @@ const express = require('express');
 const connectDB = require('./config/db');
 const cors = require('cors');
 const app = express();
-const academic = require('./models/academic');
 
 // -----------------------------------------------------------------------------------------------------------------
 
@@ -44,7 +43,8 @@ const Setting = require('./routes/settingRoute')
 const Dashboard = require('./routes/dashboardRoute')
 const PaymentProcess = require('./routes/paymentProcess')
 const adminPaymentStatusRoutes = require("./routes/adminPaymentStatus")
-const adminMaintenanceRoutes = require("./routes/adminMaintenanceRoutes")
+const AcademicManage = require('./routes/academicRoute')
+const DataDeletion = require('./routes/dataDeletionRoute')
 
 // -----------------------------------------------------------------------------------------------------------------
 
@@ -67,7 +67,8 @@ app.use('/api', Setting)
 app.use('/api', Dashboard)
 app.use('/api/finance', PaymentProcess)
 app.use('/api/admin/payment-status', adminPaymentStatusRoutes);
-app.use("/api/admin/maintenance", adminMaintenanceRoutes);
+app.use('/api', AcademicManage);
+app.use('/api/data-deletion', DataDeletion);
 
 // -----------------------------------------------------------------------------------------------------------------
 

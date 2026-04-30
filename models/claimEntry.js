@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
 const claimEntrySchema = new mongoose.Schema({
+    academic_sem_label: { type: String, required: true },
     claim_type_name: { type: String, required: true },
     staff_id: { type: String, required: true },
     staff_name: { type: String, required: true },
