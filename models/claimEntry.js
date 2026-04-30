@@ -17,10 +17,6 @@ const claimEntrySchema = new mongoose.Schema({
     credited_date: { type: Date },
     tds_amount: { type: Number, required: true },
     amount: { type: Number, required: true },
-    remarks: { type: String, required: false },
-    bank_name: { type: String, required: false },
-    branch_name: { type: String, required: false },
-    branch_code: { type: String, required: false },
     ifsc_code: { type: String, required: true },
     account_no: { type: String, required: true },
     status: {
