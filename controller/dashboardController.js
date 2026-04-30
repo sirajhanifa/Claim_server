@@ -1,9 +1,20 @@
 const Claim = require('../models/claimEntry');
-const Staff = require('../models/staffmanage')
+const Staff = require('../models/staffmanage');
+const Academic = require('../models/academic');
+
+// Helper to get active semester label
+const getActiveSemesterLabel = async () => {
+    const activeAcademic = await Academic.findOne({ active_sem: true });
+    return activeAcademic ? activeAcademic.academic_sem_label : null;
+};
 
 const getClaimCount = async (req, res) => {
     try {
+        const activeSemLabel = await getActiveSemesterLabel();
+        const matchQuery = activeSemLabel ? { academic_sem_label: activeSemLabel } : {};
+
         const result = await Claim.aggregate([
+            { $match: matchQuery },
             {
                 $group: {
                     _id: null,
@@ -56,10 +67,12 @@ const getStaffCount = async (req, res) => {
 // Get credited claim count & credited amount
 const getCreditedClaims = async (req, res) => {
     try {
+        const activeSemLabel = await getActiveSemesterLabel();
+        const matchQuery = { status: "Credited" };
+        if (activeSemLabel) matchQuery.academic_sem_label = activeSemLabel;
+
         const result = await Claim.aggregate([
-            {
-                $match: { status: "Credited" }
-            },
+            { $match: matchQuery },
             {
                 $group: {
                     _id: null,
@@ -82,12 +95,12 @@ const getCreditedClaims = async (req, res) => {
 
 const getSubmittedClaims = async (req, res) => {
     try {
+        const activeSemLabel = await getActiveSemesterLabel();
+        const matchQuery = { status: { $in: ["Submitted to Principal", "Credited"] } };
+        if (activeSemLabel) matchQuery.academic_sem_label = activeSemLabel;
+
         const result = await Claim.aggregate([
-            {
-                $match: {
-                    status: { $in: ["Submitted to Principal", "Credited"] }
-                }
-            },
+            { $match: matchQuery },
             {
                 $group: {
                     _id: null,
@@ -109,10 +122,12 @@ const getSubmittedClaims = async (req, res) => {
 
 const getPendingClaims = async (req, res) => {
     try {
+        const activeSemLabel = await getActiveSemesterLabel();
+        const matchQuery = { status: "Pending" };
+        if (activeSemLabel) matchQuery.academic_sem_label = activeSemLabel;
+
         const result = await Claim.aggregate([
-            {
-                $match: { status: "Pending" }
-            },
+            { $match: matchQuery },
             {
                 $group: {
                     _id: null,
@@ -133,10 +148,12 @@ const getPendingClaims = async (req, res) => {
 
 const getAwaitingClaims = async (req, res) => {
     try {
+        const activeSemLabel = await getActiveSemesterLabel();
+        const matchQuery = { status: "Submitted to Principal" };
+        if (activeSemLabel) matchQuery.academic_sem_label = activeSemLabel;
+
         const result = await Claim.aggregate([
-            {
-                $match: { status: "Submitted to Principal" }
-            },
+            { $match: matchQuery },
             {
                 $group: {
                     _id: null,
@@ -157,7 +174,11 @@ const getAwaitingClaims = async (req, res) => {
 
 const getInternalExternalClaims = async (req, res) => {
     try {
+        const activeSemLabel = await getActiveSemesterLabel();
+        const matchQuery = activeSemLabel ? { academic_sem_label: activeSemLabel } : {};
+
         const result = await Claim.aggregate([
+            { $match: matchQuery },
             {
                 $group: {
                     _id: "$internal_external",   // INTERNAL / EXTERNAL
@@ -189,7 +210,11 @@ const getInternalExternalClaims = async (req, res) => {
 
 const getClaimTypeAmounts = async (req, res) => {
     try {
+        const activeSemLabel = await getActiveSemesterLabel();
+        const matchQuery = activeSemLabel ? { academic_sem_label: activeSemLabel } : {};
+
         const result = await Claim.aggregate([
+            { $match: matchQuery },
             {
                 $group: {
                     _id: "$claim_type_name",
