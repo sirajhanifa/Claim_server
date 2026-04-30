@@ -7,9 +7,13 @@ const {
   deleteClaim
 } = require('../controller/claimManageController');
 
+// -----------------------------------------------------------------------------------------------
+
 router.get('/getClaim', getClaims);
 router.post('/addclaim', addClaim);
 router.post('/updateClaim/:id', updateClaim);
 router.delete('/deleteClaim/:id', deleteClaim);
+
+// -----------------------------------------------------------------------------------------------
 
 module.exports = router;

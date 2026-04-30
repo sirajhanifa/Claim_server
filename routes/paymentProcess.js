@@ -1,73 +1,4 @@
-// const express = require('express');
-// const router = express.Router();
-// const claimEntry = require('../models/claimEntry');
 
-// // Get all PR IDs with claim counts
-// router.get('/pr-ids', async (req, res) => {
-//   try {
-//     const grouped = await claimEntry.aggregate([
-//       {
-//         $match: {
-//           payment_report_id: { $exists: true, $ne: null },
-//           $or: [
-//             { credited_date: { $exists: false } },
-//             { credited_date: null }
-//           ]
-//         }
-//       },
-//       {
-//         $group: {
-//           _id: '$payment_report_id',
-//           count: { $sum: 1 }
-//         }
-//       },
-//       {
-//         $project: {
-//           payment_report_id: '$_id',
-//           count: 1,
-//           _id: 0
-//         }
-//       }
-//     ]);
-
-//     res.json(grouped);
-//   } catch (err) {
-//     console.error('Error fetching filtered PR IDs:', err);
-//     res.status(500).json({ error: 'Failed to fetch PR IDs' });
-//   }
-// });
-
-
-// // Get claims by PR ID
-// router.get('/claims/:prId', async (req, res) => {
-//   try {
-//     const claims = await claimEntry.find({ payment_report_id: req.params.prId });
-//     res.json(claims);
-//   } catch (err) {
-//     res.status(500).json({ error: 'Failed to fetch claims' });
-//   }
-// });
-
-// // Update credited date and remarks
-// router.put('/update/:id', async (req, res) => {
-//   try {
-//     const { credited_date, remarks } = req.body;
-//     const updated = await claimEntry.findByIdAndUpdate(
-//       req.params.id,
-//       {
-//         credited_date,
-//         remarks,
-//         status: credited_date ? 'Credited' : 'Pending'
-//       },
-//       { new: true }
-//     );
-//     res.json(updated);
-//   } catch (err) {
-//     res.status(500).json({ error: 'Failed to update claim' });
-//   }
-// });
-
-// module.exports = router;
 
 const express = require('express');
 const router = express.Router();
@@ -101,9 +32,9 @@ router.get('/pr-ids', async (req, res) => {
     const result = await claimEntry.aggregate([
       {
         $match: {
-          payment_report_id: {$exists: true, $ne: null},
+          payment_report_id: { $exists: true, $ne: null },
           status: "Submitted to Principal",
-          $or: [{credited_date: null}, {credited_date: {$exists: false}}]
+          $or: [{ credited_date: null }, { credited_date: { $exists: false } }]
         }
       },
       {
@@ -115,25 +46,25 @@ router.get('/pr-ids', async (req, res) => {
             phone_number: "$phone_number",
             claim_type_name: "$claim_type_name"
           },
-          groupAmount: {$sum: {$toDouble: "$amount"}}
+          groupAmount: { $sum: { $toDouble: "$amount" } }
         }
       },
       {
         // Count unique groups and total amount per PR ID
         $group: {
           _id: "$_id.payment_report_id",
-          count: {$sum: 1},
-          totalAmount: {$sum: "$groupAmount"}
+          count: { $sum: 1 },
+          totalAmount: { $sum: "$groupAmount" }
         }
       },
       {
-        $project: {payment_report_id: "$_id", count: 1, totalAmount: 1, _id: 0}
+        $project: { payment_report_id: "$_id", count: 1, totalAmount: 1, _id: 0 }
       }
     ]);
 
     res.json(result);
   } catch (err) {
-    res.status(500).json({error: "Failed to fetch PR IDs"});
+    res.status(500).json({ error: "Failed to fetch PR IDs" });
   }
 });
 
@@ -148,14 +79,14 @@ router.get('/claims/:prId', async (req, res) => {
 
     res.json(list);
   } catch (err) {
-    res.status(500).json({error: "Failed to fetch claims"});
+    res.status(500).json({ error: "Failed to fetch claims" });
   }
 });
 
 // Update claim as credited
 router.put('/update/:id', async (req, res) => {
   try {
-    const {credited_date, remarks} = req.body;
+    const { credited_date, remarks } = req.body;
 
     const updated = await claimEntry.findByIdAndUpdate(
       req.params.id,
@@ -164,7 +95,7 @@ router.put('/update/:id', async (req, res) => {
         remarks,
         status: credited_date ? "Credited" : "Submitted to Principal"
       },
-      {new: true}
+      { new: true }
     );
 
     if (updated.status === "Credited" && updated.email) {
@@ -173,7 +104,7 @@ router.put('/update/:id', async (req, res) => {
 
     res.json(updated);
   } catch (err) {
-    res.status(500).json({error: "Failed to update claim"});
+    res.status(500).json({ error: "Failed to update claim" });
   }
 });
 
@@ -181,19 +112,19 @@ router.put('/update/:id', async (req, res) => {
 // Accepts { claimIds: [], payment_report_id, credited_date, remarks }
 router.put('/update-multiple', async (req, res) => {
   try {
-    const {claimIds, payment_report_id, credited_date, remarks} = req.body;
+    const { claimIds, payment_report_id, credited_date, remarks } = req.body;
     let targets = [];
 
     if (Array.isArray(claimIds) && claimIds.length > 0) {
-      targets = await claimEntry.find({_id: {$in: claimIds}});
+      targets = await claimEntry.find({ _id: { $in: claimIds } });
     } else if (payment_report_id) {
       targets = await claimEntry.find({
         payment_report_id,
         status: "Submitted to Principal",
-        $or: [{credited_date: null}, {credited_date: {$exists: false}}]
+        $or: [{ credited_date: null }, { credited_date: { $exists: false } }]
       });
     } else {
-      return res.status(400).json({error: "No claimIds or payment_report_id provided"});
+      return res.status(400).json({ error: "No claimIds or payment_report_id provided" });
     }
 
     const updatedDocs = [];
@@ -209,7 +140,7 @@ router.put('/update-multiple', async (req, res) => {
           remarks: remarks || (doc.remarks || "") + " (Bulk credited)",
           status: "Credited"
         },
-        {new: true}
+        { new: true }
       );
 
       updatedDocs.push(updated);
@@ -226,7 +157,7 @@ router.put('/update-multiple', async (req, res) => {
     res.json(updatedDocs);
   } catch (err) {
     console.error("Bulk update failed:", err);
-    res.status(500).json({error: "Failed to update claims"});
+    res.status(500).json({ error: "Failed to update claims" });
   }
 });
 
