@@ -1,7 +1,12 @@
 const mongoose = require('mongoose');
 
 const academicSchema = new mongoose.Schema({
-    academic_sem: {
+    academic_sem_type: {
+        type: String,
+        enum: ['Odd', 'Even'],
+        required: true,
+    },
+    academic_sem_label: {
         type: String,
         required: true,
     },
@@ -9,12 +14,9 @@ const academicSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    curr_year: {
-        type: String,
-        required: true,
-    },
     active_sem: {
-        type: Number,
+        type: Boolean,
+        default: false,
         required: true,
     }
 }, {
