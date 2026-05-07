@@ -5,160 +5,169 @@ const router = express.Router();
 const claimEntry = require('../models/claimEntry');
 const nodemailer = require('nodemailer');
 
-// Email Setup
+// -----------------------------------------------------------------------------------------------
+
 const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: "jmccoeclaim@gmail.com",
-    pass: "wzrf dhdt ltkx mfjj"
-  }
+    service: "gmail",
+    auth: {
+        user: "jmccoeclaim@gmail.com",
+        pass: "wzrf dhdt ltkx mfjj"
+    }
 });
 
 const sendCreditedEmail = async (email, name, amount, claimType) => {
-  const mailOptions = {
-    from: "jmccoeclaim@gmail.com",
-    to: email,
-    subject: "Claim Credited Notification",
-    text: `Dear ${name},\n\nWe are pleased to inform you that your claim amount of Rs. ${amount} has been credited to your bank account towards ${claimType}.\n\nController of Examinations\nJamal Mohamed College`
-  };
+    const mailOptions = {
+        from: "jmccoeclaim@gmail.com",
+        to: email,
+        subject: "Claim Credited Notification",
+        text: `Dear ${name},\n\nWe are pleased to inform you that your claim amount of Rs. ${amount} has been credited to your bank account towards ${claimType}.\n\nController of Examinations\nJamal Mohamed College`
+    };
 
-  await transporter.sendMail(mailOptions);
+    await transporter.sendMail(mailOptions);
 };
 
-// Get PR IDs
-router.get('/pr-ids', async (req, res) => {
-  // console.log("hanifa")
-  try {
-    const result = await claimEntry.aggregate([
-      {
-        $match: {
-          payment_report_id: { $exists: true, $ne: null },
-          status: "Submitted to Principal",
-          $or: [{ credited_date: null }, { credited_date: { $exists: false } }]
-        }
-      },
-      {
-        // Deduplicate by the same merge key used in the frontend, sum amounts within each group
-        $group: {
-          _id: {
-            payment_report_id: "$payment_report_id",
-            staff_name: "$staff_name",
-            phone_number: "$phone_number",
-            claim_type_name: "$claim_type_name"
-          },
-          groupAmount: { $sum: { $toDouble: "$amount" } }
-        }
-      },
-      {
-        // Count unique groups and total amount per PR ID
-        $group: {
-          _id: "$_id.payment_report_id",
-          count: { $sum: 1 },
-          totalAmount: { $sum: "$groupAmount" }
-        }
-      },
-      {
-        $project: { payment_report_id: "$_id", count: 1, totalAmount: 1, _id: 0 }
-      }
-    ]);
+// -----------------------------------------------------------------------------------------------
 
-    res.json(result);
-  } catch (err) {
-    res.status(500).json({ error: "Failed to fetch PR IDs" });
-  }
+router.get('/pr-ids', async (req, res) => {
+
+    try {
+
+        const result = await claimEntry.aggregate([
+            {
+                $match: {
+                    payment_report_id: { $exists: true, $ne: null },
+                    status: "Submitted to Principal",
+                    $or: [{ credited_date: null }, { credited_date: { $exists: false } }]
+                }
+            },
+            {
+                // Deduplicate by the same merge key used in the frontend, sum amounts within each group
+                $group: {
+                    _id: {
+                        payment_report_id: "$payment_report_id",
+                        staff_name: "$staff_name",
+                        phone_number: "$phone_number",
+                        claim_type_name: "$claim_type_name"
+                    },
+                    groupAmount: { $sum: { $toDouble: "$amount" } }
+                }
+            },
+            {
+                // Count unique groups and total amount per PR ID
+                $group: {
+                    _id: "$_id.payment_report_id",
+                    count: { $sum: 1 },
+                    totalAmount: { $sum: "$groupAmount" }
+                }
+            },
+            {
+                $project: { payment_report_id: "$_id", count: 1, totalAmount: 1, _id: 0 }
+            }
+        ]);
+
+        res.json(result);
+    } catch (err) {
+        res.status(500).json({ error: "Failed to fetch PR IDs" });
+    }
 });
+
+// -----------------------------------------------------------------------------------------------
 
 // Get claims under PR ID
-router.get('/claims/:prId', async (req, res) => {
-  // console.log("siraj")
-  try {
-    const list = await claimEntry.find({
-      payment_report_id: req.params.prId,
-      status: "Submitted to Principal"
-    });
 
-    res.json(list);
-  } catch (err) {
-    res.status(500).json({ error: "Failed to fetch claims" });
-  }
+router.get('/claims/:prId', async (req, res) => {
+    try {
+        const list = await claimEntry.find({
+            payment_report_id: req.params.prId,
+            status: "Submitted to Principal"
+        });
+        res.json(list);
+    } catch (err) {
+        res.status(500).json({ error: "Failed to fetch claims" });
+    }
 });
+
+// -----------------------------------------------------------------------------------------------
 
 // Update claim as credited
+
 router.put('/update/:id', async (req, res) => {
-  try {
-    const { credited_date, remarks } = req.body;
 
-    const updated = await claimEntry.findByIdAndUpdate(
-      req.params.id,
-      {
-        credited_date,
-        remarks,
-        status: credited_date ? "Credited" : "Submitted to Principal"
-      },
-      { new: true }
-    );
+    try {
 
-    if (updated.status === "Credited" && updated.email) {
-      await sendCreditedEmail(updated.email, updated.staff_name, updated.amount, updated.claim_type_name);
+        const { credited_date, remarks } = req.body;
+        const updated = await claimEntry.findByIdAndUpdate(
+            req.params.id,
+            {
+                credited_date,
+                remarks,
+                status: credited_date ? "Credited" : "Submitted to Principal"
+            },
+            { new: true }
+        );
+        if (updated.status === "Credited" && updated.email) {
+            await sendCreditedEmail(updated.email, updated.staff_name, updated.amount, updated.claim_type_name);
+        }
+        res.json(updated);
+    } catch (err) {
+        console.error('Error updating claim : ', err);
+        res.status(500).json({ error: "Failed to update claim" });
     }
-
-    res.json(updated);
-  } catch (err) {
-    res.status(500).json({ error: "Failed to update claim" });
-  }
 });
+
+// -----------------------------------------------------------------------------------------------
 
 // Bulk update claims (mark multiple claims as credited)
 // Accepts { claimIds: [], payment_report_id, credited_date, remarks }
+
 router.put('/update-multiple', async (req, res) => {
-  try {
-    const { claimIds, payment_report_id, credited_date, remarks } = req.body;
-    let targets = [];
 
-    if (Array.isArray(claimIds) && claimIds.length > 0) {
-      targets = await claimEntry.find({ _id: { $in: claimIds } });
-    } else if (payment_report_id) {
-      targets = await claimEntry.find({
-        payment_report_id,
-        status: "Submitted to Principal",
-        $or: [{ credited_date: null }, { credited_date: { $exists: false } }]
-      });
-    } else {
-      return res.status(400).json({ error: "No claimIds or payment_report_id provided" });
-    }
+    try {
 
-    const updatedDocs = [];
+        const { claimIds, payment_report_id, credited_date, remarks } = req.body;
+        let targets = [];
 
-    for (const doc of targets) {
-      // skip already credited items
-      if (doc.status === "Credited" && doc.credited_date) continue;
-
-      const updated = await claimEntry.findByIdAndUpdate(
-        doc._id,
-        {
-          credited_date: credited_date || new Date(),
-          remarks: remarks || (doc.remarks || "") + " (Bulk credited)",
-          status: "Credited"
-        },
-        { new: true }
-      );
-
-      updatedDocs.push(updated);
-
-      if (updated && updated.status === "Credited" && updated.email) {
-        try {
-          await sendCreditedEmail(updated.email, updated.staff_name, updated.amount, updated.claim_type_name);
-        } catch (emailErr) {
-          console.error("Failed to send email for claim", updated._id, emailErr);
+        if (Array.isArray(claimIds) && claimIds.length > 0) {
+            targets = await claimEntry.find({ _id: { $in: claimIds } });
+        } else if (payment_report_id) {
+            targets = await claimEntry.find({
+                payment_report_id,
+                status: "Submitted to Principal",
+                $or: [{ credited_date: null }, { credited_date: { $exists: false } }]
+            });
+        } else {
+            return res.status(400).json({ error: "No claimIds or payment_report_id provided" });
         }
-      }
-    }
 
-    res.json(updatedDocs);
-  } catch (err) {
-    console.error("Bulk update failed:", err);
-    res.status(500).json({ error: "Failed to update claims" });
-  }
+        const updatedDocs = [];
+
+        for (const doc of targets) {
+            if (doc.status === "Credited" && doc.credited_date) continue;
+            const updated = await claimEntry.findByIdAndUpdate(
+                doc._id,
+                {
+                    credited_date: credited_date || new Date(),
+                    remarks: remarks || (doc.remarks || "") + " (Bulk credited)",
+                    status: "Credited"
+                },
+                { new: true }
+            );
+            updatedDocs.push(updated);
+                if (updated && updated.status === "Credited" && updated.email) {
+                try {
+                    await sendCreditedEmail(updated.email, updated.staff_name, updated.amount, updated.claim_type_name);
+                } catch (emailErr) {
+                    console.error("Failed to send email for claim", updated._id, emailErr);
+                }
+            }
+        }
+        res.json(updatedDocs);
+    } catch (err) {
+        console.error('Error updating claims : ', err);
+        res.status(500).json({ error: "Failed to update claims" });
+    }
 });
+
+// -----------------------------------------------------------------------------------------------
 
 module.exports = router;
