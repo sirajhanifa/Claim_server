@@ -8,40 +8,33 @@ router.get("/pr-ids", async (req, res) => {
 
 	try {
 
-		const result = await claimEntry.aggregate([
-			// Join with academic collection
-			{
-				$lookup: {
-					from: "academic",
-					localField: "academic_sem_label",
-					foreignField: "academic_sem_label",
-					as: "academic_data"
-				}
-			},
+		const reports = await claimEntry.aggregate([
 
-			// Convert array to object
-			{
-				$unwind: "$academic_data"
-			},
-
-			// Filter current active semester + status
 			{
 				$match: {
-					"academic_data.active_sem": true,
-					payment_report_id: { $exists: true, $ne: null, $ne: "" },
-					status: { $in: ["Submitted to Principal", "Credited"] }
+					status: { $in: ["Submitted to Principal", "Credited"] },
+					payment_report_id: { $ne: null }
 				}
 			},
 
-			// Group by payment_report_id
 			{
 				$group: {
-					_id: "$payment_report_id",
+					_id: {
+						staff_name: "$staff_name",
+						phone_number: "$phone_number",
+						claim_type_name: "$claim_type_name",
+						payment_report_id: "$payment_report_id"
+					}
+				}
+			},
+
+			{
+				$group: {
+					_id: "$_id.payment_report_id",
 					count: { $sum: 1 }
 				}
 			},
 
-			// Final response format
 			{
 				$project: {
 					_id: 0,
@@ -50,30 +43,87 @@ router.get("/pr-ids", async (req, res) => {
 				}
 			},
 
-			// Optional sorting
 			{
 				$sort: {
-					payment_report_id: 1
+					payment_report_id: -1
 				}
 			}
+
 		]);
-		res.json(result);
+
+		res.json(reports);
+
 	} catch (err) {
-		console.error('Error fetching payment report IDs : ', err);
-		res.status(500).json({ error: "Failed to fetch PR IDs" });
+		res.status(500).json({ error: "Failed to fetch report ids" });
 	}
 });
- 
+
 // -----------------------------------------------------------------------------------------------
 
 router.get("/claims/:prId", async (req, res) => {
+
 	try {
-		const claims = await claimEntry.find({
-			payment_report_id: req.params.prId,
-			status: { $in: ["Submitted to Principal", "Credited"] }
+
+		const groupedClaims = await claimEntry.aggregate([
+
+			{
+				$match: {
+					payment_report_id: req.params.prId,
+					status: { $in: ["Submitted to Principal", "Credited"] }
+				}
+			},
+
+			{
+				$group: {
+					_id: {
+						staff_name: "$staff_name",
+						phone_number: "$phone_number",
+						claim_type_name: "$claim_type_name",
+						payment_report_id: "$payment_report_id"
+					},
+
+					staff_name: { $first: "$staff_name" },
+					phone_number: { $first: "$phone_number" },
+					claim_type_name: { $first: "$claim_type_name" },
+					payment_report_id: { $first: "$payment_report_id" },
+
+					totalAmount: { $sum: "$amount" },
+					count: { $sum: 1 },
+
+					submission_date: { $first: "$submission_date" },
+					credited_date: { $first: "$credited_date" },
+					status: { $first: "$status" }
+				}
+			},
+
+			{
+				$project: {
+					_id: 0,
+					staff_name: 1,
+					phone_number: 1,
+					claim_type_name: 1,
+					payment_report_id: 1,
+					totalAmount: 1,
+					count: 1,
+					submission_date: 1,
+					credited_date: 1,
+					status: 1
+				}
+			},
+
+			{
+				$sort: {
+					staff_name: 1
+				}
+			}
+
+		]);
+
+		res.json({
+			processedCount: groupedClaims.length,
+			claims: groupedClaims
 		});
 
-		res.json(claims);
 	} catch (err) {
 		res.status(500).json({ error: "Failed to fetch claims" });
 	}

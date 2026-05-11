@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const ClaimEntry = require('../models/claimEntry')
+const ClaimEntry = require('../models/claimEntry');
+const Academic = require('../models/academic');
 const PDFDocument = require('pdfkit');
 const PDFTable = require('pdfkit-table');
 const { getClaim } = require('../controller/claimReportController');
@@ -37,34 +38,111 @@ router.put('/submitClaims', async (req, res) => {
 
 	try {
 
-		const { claimType, category } = req.body;
+		const { claimType, category, ifscFilter } = req.body;
 		const today = new Date();
 
-		const baseFilter = { $or: [{ submission_date: null }, { submission_date: '' }] };
+		// BASE FILTER
+
+		const baseFilter = {
+			$or: [
+				{ submission_date: null },
+				{ submission_date: '' }
+			]
+		};
+
+		// Claim Type Filter
 		if (claimType && claimType !== 'all') {
 			baseFilter.claim_type_name = claimType;
 		}
 
+		// Category Filter
 		if (category && category !== 'all') {
 			baseFilter.internal_external = category;
 		}
 
-		const unsubmittedClaims = await ClaimEntry.find(baseFilter);
-		if (unsubmittedClaims.length === 0) {
-			return res.status(200).json({ message: 'No unsubmitted claims found.' });
+		// IFSC Filter
+		if (ifscFilter === "JMC_IOB") {
+			baseFilter.ifsc_code = "IOBA0000467";
 		}
 
-		const year = today.getFullYear();
+		if (ifscFilter === "IOB_OTHERS") {
+			baseFilter.ifsc_code = {
+				$regex: "^IOBA",
+				$ne: "IOBA0000467"
+			};
+		}
 
-		const totalSubmitted = await ClaimEntry.countDocuments({
-			submission_date: { $ne: null },
-			payment_report_id: { $regex: `^PR-${year}-` }
+		if (ifscFilter === "OTHER_BANKS") {
+			baseFilter.ifsc_code = {
+				$not: /^IOBA/
+			};
+		}
+
+		// GET CLAIMS
+
+		const unsubmittedClaims = await ClaimEntry.find(baseFilter);
+
+		if (unsubmittedClaims.length === 0) {
+			return res.status(200).json({
+				message: 'No unsubmitted claims found.'
+			});
+		}
+
+		// GET ACTIVE SEMESTER
+
+		const activeAcademic = await Academic.findOne({
+			active_sem: true
 		});
 
-		const prId = `PR-${today.getFullYear()}-${String(totalSubmitted + 1).padStart(3, '0')}`;
+		if (!activeAcademic) {
+			return res.status(400).json({
+				message: 'No active academic semester found.'
+			});
+		}
+
+		// Example: "Nov-26"
+		const semLabel = activeAcademic.academic_sem_label;
+
+		// Convert Nov-26 => N26
+		const [month, yearPart] = semLabel.split('-');
+
+		const shortSemLabel =
+			month.charAt(0).toUpperCase() + yearPart;
+
+		// CLAIM PREFIX
+
+		const prefixMap = {
+			"PRACTICAL EXAM CLAIM": "PRAC",
+			"CENTRAL VALUATION": "CV",
+			"COE CV CLAIM": "COE",
+			"SKILLED ASSISTANT": "SKILLED",
+			"ABILITY ENHANCEMENT CLAIM": "AEC",
+			"QPS": "QPS",
+			"SCRUTINY CLAIM": "SCRU",
+			"CIA REAPEAR CLAIM": "CIA",
+			"CAMP CLAIM": "CAMP"
+		};
+
+		const claimPrefix = prefixMap[claimType] || "OTHER";
+
+		// COUNT EXISTING IDS
+
+		const totalSubmitted = await ClaimEntry.countDocuments({
+			payment_report_id: {
+				$regex: `^${claimPrefix}-${shortSemLabel}-`
+			}
+		});
+
+		// FINAL PAYMENT REPORT ID
+		// Example: PRAC-N26-001
+		const prId = `${claimPrefix}-${shortSemLabel}-${String(totalSubmitted + 1).padStart(3, '0')}`;
+
+		// UPDATE CLAIMS
 
 		await ClaimEntry.updateMany(
-			{ _id: { $in: unsubmittedClaims.map(c => c._id) } },
+			{
+				_id: { $in: unsubmittedClaims.map(c => c._id) }
+			},
 			{
 				$set: {
 					submission_date: today,
@@ -74,15 +152,17 @@ router.put('/submitClaims', async (req, res) => {
 			}
 		);
 
+		// RESPONSE
+
 		return res.status(200).json({
 			message: 'Claims submitted successfully',
-			prId,
-			submission_date: today
+			prId, submission_date: today
 		});
 
 	} catch (error) {
-		console.error(error);
-		res.status(500).json({ message: 'Internal Server Error' });
+		console.error('Error in submitting claims : ', error);
+		return res.status(500).json({ message: 'Internal Server Error' });
+
 	}
 });
 

@@ -153,7 +153,7 @@ router.put('/update-multiple', async (req, res) => {
                 { new: true }
             );
             updatedDocs.push(updated);
-                if (updated && updated.status === "Credited" && updated.email) {
+            if (updated && updated.status === "Credited" && updated.email) {
                 try {
                     await sendCreditedEmail(updated.email, updated.staff_name, updated.amount, updated.claim_type_name);
                 } catch (emailErr) {
