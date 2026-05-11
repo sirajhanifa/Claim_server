@@ -1,6 +1,6 @@
 const express = require('express')
 const router = express.Router();
-const { getUser, addUser, deleteUser, updateUser } = require('../controller/settingController')
+const { getUser, addUser, deleteUser, updateUser } = require('../controller/settingsController')
 
 // -----------------------------------------------------------------------------------------------
 

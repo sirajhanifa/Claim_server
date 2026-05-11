@@ -4,7 +4,7 @@ const { deleteDataByAcademicSemLabel } = require('../controller/dataDeletionCont
 
 // -----------------------------------------------------------------------------------------------
 
-router.post('/delete-by-academic-sem', deleteDataByAcademicSemLabel);
+router.post('/data-deletion/delete-by-academic-sem', deleteDataByAcademicSemLabel);
 
 // -----------------------------------------------------------------------------------------------
 

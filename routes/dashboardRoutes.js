@@ -4,7 +4,7 @@ const { getClaimCount, getStaffCount, getCreditedClaims, getSubmittedClaims, get
 
 // -----------------------------------------------------------------------------------------------
 
-router.get('/totalclaimscount', getClaimCount)
+router.get("/totalclaimscount", getClaimCount)
 router.get("/staffcount", getStaffCount);
 router.get("/creditedclaims", getCreditedClaims);
 router.get("/submittedclaims", getSubmittedClaims);

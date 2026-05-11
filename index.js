@@ -2,6 +2,8 @@ const express = require('express');
 const connectDB = require('./config/db');
 const cors = require('cors');
 const app = express();
+const Academic = require('./models/academic')
+const ClaimEntry = require('./models/claimEntry')
 
 // -----------------------------------------------------------------------------------------------------------------
 
@@ -12,15 +14,6 @@ app.use(cors({
     methods: ["GET", "POST", "PUT", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"],
 }));
-
-// -----------------------------------------------------------------------------------------------------------------
-
-// Models
-
-require('./models/user')
-require('./models/claimtype')
-require('./models/staffmanage')
-require('./models/claimEntry')
 
 // -----------------------------------------------------------------------------------------------------------------
 
@@ -35,16 +28,16 @@ require('./models/claimEntry')
 // Routes
 
 const login = require('./routes/userRoutes')
-const staffmanage = require('./routes/staffRoutes')
-const claimmanage = require('./routes/claimManageRoute')
-const claimentry = require('./routes/claimEntryRoute')
-const cliamReport = require('./routes/claimReport')
-const Setting = require('./routes/settingRoute')
-const Dashboard = require('./routes/dashboardRoute')
-const PaymentProcess = require('./routes/paymentProcess')
-const adminPaymentStatusRoutes = require("./routes/adminPaymentStatus")
-const AcademicManage = require('./routes/academicRoute')
-const DataDeletion = require('./routes/dataDeletionRoute')
+const staffManage = require('./routes/staffManageRoutes')
+const claimManage = require('./routes/claimManageRoutes')
+const claimEntry = require('./routes/claimEntryRoutes')
+const settings = require('./routes/settingsRoutes')
+const dashboard = require('./routes/dashboardRoutes')
+const paymentStatus = require("./routes/paymentStatusRoutes")
+const academicManage = require('./routes/academicRoutes')
+const dataDeletion = require('./routes/dataDeletionRoutes')
+const claimSubmission = require('./routes/claimSubmissionRoutes')
+const paymentProcess = require('./routes/paymentProcessRoutes')
 
 // -----------------------------------------------------------------------------------------------------------------
 
@@ -59,18 +52,32 @@ app.use(express.json());
 // Routes
 
 app.use('/api', login)
-app.use('/api', claimmanage)
-app.use('/api/staff', staffmanage)
-app.use('/api', claimentry)
-app.use('/api', cliamReport)
-app.use('/api', Setting)
-app.use('/api', Dashboard)
-app.use('/api/finance', PaymentProcess)
-app.use('/api/admin/payment-status', adminPaymentStatusRoutes);
-app.use('/api', AcademicManage);
-app.use('/api/data-deletion', DataDeletion);
+app.use('/api', claimManage)
+app.use('/api/staff', staffManage)
+app.use('/api', claimEntry)
+app.use('/api', settings)
+app.use('/api', dashboard)
+app.use('/api/finance', paymentProcess)
+app.use('/api/admin/payment-status', paymentStatus);
+app.use('/api', academicManage);
+app.use('/api', dataDeletion);
+app.use('/api', claimSubmission);
 
 // -----------------------------------------------------------------------------------------------------------------
+
+app.get('/claimDatas', async (req, res) => {
+    try {
+        const currAcademic = await Academic.findOne({ active_sem: true });
+        const entries = await ClaimEntry.find({ academic_sem_label: currAcademic.academic_sem_label }).sort({ createdAt: -1 });
+        res.json(entries);
+    } catch (error) {
+        console.error('Error fetching claim entries : ', error.message);
+        res.status(500).json({ message: 'Internal Server Error' });
+    }
+});
+
+// -----------------------------------------------------------------------------------------------------------------
+
 
 // Start server
 
