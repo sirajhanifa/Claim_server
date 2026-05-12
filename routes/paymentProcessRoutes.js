@@ -22,7 +22,6 @@ const sendCreditedEmail = async (email, name, amount, claimType) => {
         subject: "Claim Credited Notification",
         text: `Dear ${name},\n\nWe are pleased to inform you that your claim amount of Rs. ${amount} has been credited to your bank account towards ${claimType}.\n\nController of Examinations\nJamal Mohamed College`
     };
-
     await transporter.sendMail(mailOptions);
 };
 
@@ -36,7 +35,7 @@ router.get('/pr-ids', async (req, res) => {
             {
                 $match: {
                     payment_report_id: { $exists: true, $ne: null },
-                    status: "Submitted to Principal",
+                    status: "Submitted",
                     $or: [{ credited_date: null }, { credited_date: { $exists: false } }]
                 }
             },
@@ -79,7 +78,7 @@ router.get('/claims/:prId', async (req, res) => {
     try {
         const list = await ClaimEntry.find({
             payment_report_id: req.params.prId,
-            status: "Submitted to Principal"
+            status: "Submitted"
         });
         res.json(list);
     } catch (err) {
@@ -101,7 +100,7 @@ router.put('/update/:id', async (req, res) => {
             {
                 credited_date,
                 remarks,
-                status: credited_date ? "Credited" : "Submitted to Principal"
+                status: credited_date ? "Credited" : "Submitted"
             },
             { new: true }
         );
@@ -132,7 +131,7 @@ router.put('/update-multiple', async (req, res) => {
         } else if (payment_report_id) {
             targets = await ClaimEntry.find({
                 payment_report_id,
-                status: "Submitted to Principal",
+                status: "Submitted",
                 $or: [{ credited_date: null }, { credited_date: { $exists: false } }]
             });
         } else {
