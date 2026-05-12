@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const { getClaimCount, getStaffCount, getCreditedClaims, getSubmittedClaims, getPendingClaims, getAwaitingClaims, getInternalExternalClaims, getClaimTypeAmounts } = require('../controller/dashboardController');
+const { totalClaimsCount, staffsCount, getCreditedClaims, getSubmittedClaims, getPendingClaims, getAwaitingClaims, getInternalExternalClaims, getClaimTypeAmounts } = require('../controller/dashboardController');
 
 // -----------------------------------------------------------------------------------------------
 
-router.get("/totalclaimscount", getClaimCount)
-router.get("/staffcount", getStaffCount);
+router.get("/totalClaimsCount", totalClaimsCount)
+router.get("/staffsCount", staffsCount);
 router.get("/creditedclaims", getCreditedClaims);
 router.get("/submittedclaims", getSubmittedClaims);
 router.get("/pendingclaims", getPendingClaims);

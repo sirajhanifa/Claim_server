@@ -4,6 +4,8 @@ const cors = require('cors');
 const app = express();
 const Academic = require('./models/academic')
 const ClaimEntry = require('./models/claimEntries')
+const User = require('./models/user');
+const jwt = require('jsonwebtoken');
 
 // -----------------------------------------------------------------------------------------------------------------
 
@@ -27,11 +29,10 @@ app.use(cors({
 
 // Routes
 
-const login = require('./routes/userRoutes')
+const user = require('./routes/userRoutes')
 const staffManage = require('./routes/staffManageRoutes')
 const claimManage = require('./routes/claimManageRoutes')
 const claimEntry = require('./routes/claimEntryRoutes')
-const settings = require('./routes/settingsRoutes')
 const dashboard = require('./routes/dashboardRoutes')
 const paymentStatus = require("./routes/paymentStatusRoutes")
 const academicManage = require('./routes/academicRoutes')
@@ -51,11 +52,10 @@ app.use(express.json());
 
 // Routes
 
-app.use('/api', login)
+app.use('/api', user)
 app.use('/api', claimManage)
 app.use('/api/staff', staffManage)
 app.use('/api', claimEntry)
-app.use('/api', settings)
 app.use('/api', dashboard)
 app.use('/api/finance', paymentProcess)
 app.use('/api/admin/payment-status', paymentStatus);
@@ -73,6 +73,32 @@ app.get('/claimDatas', async (req, res) => {
     } catch (error) {
         console.error('Error fetching claim entries : ', error.message);
         res.status(500).json({ message: 'Internal Server Error' });
+    }
+});
+
+// -----------------------------------------------------------------------------------------------------------------
+
+
+app.get('/api/login', async (req, res) => {
+
+    try {
+
+        const { username, password } = req.body;
+        const secretKey = process.env.JWT_SECRET;
+        const user = await User.findOne({ username });
+        if (!user) { return res.status(404).json({ message: 'User not found' }) }
+        if (user.password !== password) { return res.status(401).json({ message: 'Incorrect password' }) }
+        const token = jwt.sign({ username: user.username }, secretKey, { expiresIn: '1h' });
+        return res.status(200).json({
+            message: 'Login successful!',
+            token, user: {
+                id: user._id,
+                username: user.username,
+            },
+        });
+    } catch (error) {
+        console.error('Login error:', error);
+        return res.status(500).json({ message: 'Server error' });
     }
 });
 

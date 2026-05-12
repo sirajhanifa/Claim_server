@@ -1,43 +1,78 @@
-const jwt = require('jsonwebtoken');
 const User = require('../models/user');
 
-// -------------------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------------------------------------------
 
-// Login User Controller
+// GET all users
 
-const loginUser = async (req, res) => {
-
-	const { username, password } = req.body;
-	const secretKey = process.env.JWT_SECRET;
-
-	try {
-
-		const user = await User.findOne({ username });
-
-		if (!user) {
-			return res.status(404).json({ message: 'User not found' });
-		}
-
-		if (user.password !== password) {
-			return res.status(401).json({ message: 'Incorrect password' });
-		}
-
-		const token = jwt.sign({ username: user.username }, secretKey, { expiresIn: '1h' });
-
-		return res.status(200).json({
-			message: 'Login successful!',
-			token,
-			user: {
-				id: user._id,
-				username: user.username,
-			},
-		});
-	} catch (error) {
-		console.error('Login error:', error);
-		return res.status(500).json({ message: 'Server error' });
-	}
+const getUser = async (req, res) => {
+    try {
+        const UserData = await User.find();
+        res.status(200).json(UserData);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Failed to fetch users' });
+    }
 };
 
-// -------------------------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------------------------------------------
 
-module.exports = { loginUser };
+// POST: Add new user
+
+const addUser = async (req, res) => {
+
+    try {
+
+        const { username, password } = req.body;
+
+        // Validation
+        if (!username || !password) {
+            return res.status(400).json({ message: 'Username and password are required' });
+        }
+
+        // Create new user
+        const newUser = await User.create({ username, password });
+
+        res.status(201).json({ message: 'User created successfully', data: newUser });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Failed to create user' });
+    }
+};
+
+// -----------------------------------------------------------------------------------------------------------------
+
+// DELETE user by ID
+
+const deleteUser = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const deletedUser = await User.findByIdAndDelete(id);
+        if (!deletedUser) { return res.status(404).json({ message: 'User not found' }) }
+        res.status(200).json({ message: 'User deleted successfully' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Failed to delete user' });
+    }
+};
+
+// -----------------------------------------------------------------------------------------------------------------
+
+// UPDATE user by ID
+
+const updateUser = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { username, password } = req.body;
+        if (!username || !password) { return res.status(400).json({ message: 'Username and password are required' }) }
+        const updatedUser = await User.findByIdAndUpdate(id, { username, password }, { new: true });
+        if (!updatedUser) { return res.status(404).json({ message: 'User not found' }) }
+        res.status(200).json({ message: 'User updated successfully', data: updatedUser });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Failed to update user' });
+    }
+};
+
+// -----------------------------------------------------------------------------------------------------------------
+
+module.exports = { getUser, addUser, deleteUser, updateUser };

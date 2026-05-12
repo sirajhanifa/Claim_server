@@ -1,19 +1,25 @@
-const ClaimType = require('../models/claimTypes');
+const ClaimEntry = require('../models/claimEntries');
 const Staff = require('../models/staff');
 const Academic = require('../models/academic');
 
+// -----------------------------------------------------------------------------------------------------------------
+
 // Helper to get active semester label
+
 const getActiveSemesterLabel = async () => {
     const activeAcademic = await Academic.findOne({ active_sem: true });
     return activeAcademic ? activeAcademic.academic_sem_label : null;
 };
 
-const getClaimCount = async (req, res) => {
+// -----------------------------------------------------------------------------------------------------------------
+
+const totalClaimsCount = async (req, res) => {
+
     try {
+
         const activeSemLabel = await getActiveSemesterLabel();
         const matchQuery = activeSemLabel ? { academic_sem_label: activeSemLabel } : {};
-
-        const result = await ClaimType.aggregate([
+        const result = await ClaimEntry.aggregate([
             { $match: matchQuery },
             {
                 $group: {
@@ -23,9 +29,7 @@ const getClaimCount = async (req, res) => {
                 }
             }
         ]);
-
         const { totalClaims, totalAmount } = result[0] || { totalClaims: 0, totalAmount: 0 };
-
         res.status(200).json({ totalClaims, totalAmount });
     } catch (error) {
         console.error('Error fetching claim stats:', error);
@@ -33,7 +37,10 @@ const getClaimCount = async (req, res) => {
     }
 };
 
-const getStaffCount = async (req, res) => {
+// -----------------------------------------------------------------------------------------------------------------
+
+const staffsCount = async (req, res) => {
+
     try {
         const result = await Staff.aggregate([
             {
@@ -53,6 +60,7 @@ const getStaffCount = async (req, res) => {
             if (r._id === "EXTERNAL") external = r.count;
         });
 
+        // console.log(internal, external)
         res.status(200).json({
             internal,
             external,
@@ -64,14 +72,19 @@ const getStaffCount = async (req, res) => {
     }
 };
 
+// -----------------------------------------------------------------------------------------------------------------
+
 // Get credited claim count & credited amount
+
 const getCreditedClaims = async (req, res) => {
+
     try {
+
         const activeSemLabel = await getActiveSemesterLabel();
         const matchQuery = { status: "Credited" };
         if (activeSemLabel) matchQuery.academic_sem_label = activeSemLabel;
 
-        const result = await ClaimType.aggregate([
+        const result = await ClaimEntry.aggregate([
             { $match: matchQuery },
             {
                 $group: {
@@ -93,13 +106,16 @@ const getCreditedClaims = async (req, res) => {
     }
 };
 
-const getSubmittedClaims = async (req, res) => {
-    try {
-        const activeSemLabel = await getActiveSemesterLabel();
-        const matchQuery = { status: { $in: ["Submitted to Principal", "Credited"] } };
-        if (activeSemLabel) matchQuery.academic_sem_label = activeSemLabel;
+// -----------------------------------------------------------------------------------------------------------------
 
-        const result = await ClaimType.aggregate([
+const getSubmittedClaims = async (req, res) => {
+
+    try {
+
+        const activeSemLabel = await getActiveSemesterLabel();
+        const matchQuery = { status: { $in: ["Processed", "Credited"] } };
+        if (activeSemLabel) matchQuery.academic_sem_label = activeSemLabel;
+        const result = await ClaimEntry.aggregate([
             { $match: matchQuery },
             {
                 $group: {
@@ -109,10 +125,7 @@ const getSubmittedClaims = async (req, res) => {
                 }
             }
         ]);
-
-        const { submittedClaims, submittedAmount } =
-            result[0] || { submittedClaims: 0, submittedAmount: 0 };
-
+        const { submittedClaims, submittedAmount } = result[0] || { submittedClaims: 0, submittedAmount: 0 };
         res.status(200).json({ submittedClaims, submittedAmount });
     } catch (error) {
         console.error("Error fetching submitted claims:", error);
@@ -120,13 +133,16 @@ const getSubmittedClaims = async (req, res) => {
     }
 };
 
-const getPendingClaims = async (req, res) => {
-    try {
-        const activeSemLabel = await getActiveSemesterLabel();
-        const matchQuery = { status: "Pending" };
-        if (activeSemLabel) matchQuery.academic_sem_label = activeSemLabel;
+// -----------------------------------------------------------------------------------------------------------------
 
-        const result = await ClaimType.aggregate([
+const getPendingClaims = async (req, res) => {
+
+    try {
+
+        const activeSemLabel = await getActiveSemesterLabel();
+        const matchQuery = { status: "Unsubmitted" };
+        if (activeSemLabel) matchQuery.academic_sem_label = activeSemLabel;
+        const result = await ClaimEntry.aggregate([
             { $match: matchQuery },
             {
                 $group: {
@@ -136,23 +152,24 @@ const getPendingClaims = async (req, res) => {
                 }
             }
         ]);
-        const { pendingClaims, pendingAmount } =
-            result[0] || { pendingClaims: 0, pendingAmount: 0 };
-
+        const { pendingClaims, pendingAmount } = result[0] || { pendingClaims: 0, pendingAmount: 0 };
         res.status(200).json({ pendingClaims, pendingAmount });
     } catch (error) {
-        console.error("Error fetching pending claims:", error);
+        console.error("Error fetching pending claims : ", error);
         res.status(500).json({ message: "Server error" });
     }
 };
 
-const getAwaitingClaims = async (req, res) => {
-    try {
-        const activeSemLabel = await getActiveSemesterLabel();
-        const matchQuery = { status: "Submitted to Principal" };
-        if (activeSemLabel) matchQuery.academic_sem_label = activeSemLabel;
+// -----------------------------------------------------------------------------------------------------------------
 
-        const result = await ClaimType.aggregate([
+const getAwaitingClaims = async (req, res) => {
+
+    try {
+
+        const activeSemLabel = await getActiveSemesterLabel();
+        const matchQuery = { status: "Processed" };
+        if (activeSemLabel) matchQuery.academic_sem_label = activeSemLabel;
+        const result = await ClaimEntry.aggregate([
             { $match: matchQuery },
             {
                 $group: {
@@ -162,26 +179,27 @@ const getAwaitingClaims = async (req, res) => {
                 }
             }
         ]);
-
-        const { awaitingClaims, awaitingAmount } =
-            result[0] || { awaitingClaims: 0, awaitingAmount: 0 };
+        const { awaitingClaims, awaitingAmount } = result[0] || { awaitingClaims: 0, awaitingAmount: 0 };
         res.status(200).json({ awaitingClaims, awaitingAmount });
     } catch (error) {
-        console.error("Error fetching awaiting claims:", error);
+        console.error("Error fetching awaiting claims : ", error);
         res.status(500).json({ message: "Server error" });
     }
 };
 
+// -----------------------------------------------------------------------------------------------------------------
+
 const getInternalExternalClaims = async (req, res) => {
+
     try {
+
         const activeSemLabel = await getActiveSemesterLabel();
         const matchQuery = activeSemLabel ? { academic_sem_label: activeSemLabel } : {};
-
-        const result = await ClaimType.aggregate([
+        const result = await ClaimEntry.aggregate([
             { $match: matchQuery },
             {
                 $group: {
-                    _id: "$internal_external",   // INTERNAL / EXTERNAL
+                    _id: "$internal_external",  
                     count: { $sum: 1 },
                     amount: { $sum: "$amount" }
                 }
@@ -191,7 +209,6 @@ const getInternalExternalClaims = async (req, res) => {
         let internalCount = 0;
         let externalCount = 0;
 
-        // Convert array → simple values
         result.forEach(r => {
             if (r._id === "INTERNAL") internalCount = r.count;
             if (r._id === "EXTERNAL") externalCount = r.count;
@@ -203,17 +220,20 @@ const getInternalExternalClaims = async (req, res) => {
         });
 
     } catch (error) {
-        console.error("Error fetching internal/external claims:", error);
+        console.error("Error fetching internal/external claims : ", error);
         res.status(500).json({ message: "Server error" });
     }
 };
 
+// -----------------------------------------------------------------------------------------------------------------
+
 const getClaimTypeAmounts = async (req, res) => {
+
     try {
+
         const activeSemLabel = await getActiveSemesterLabel();
         const matchQuery = activeSemLabel ? { academic_sem_label: activeSemLabel } : {};
-
-        const result = await ClaimType.aggregate([
+        const result = await ClaimEntry.aggregate([
             { $match: matchQuery },
             {
                 $group: {
@@ -223,17 +243,17 @@ const getClaimTypeAmounts = async (req, res) => {
             },
             { $sort: { totalAmount: -1 } }
         ]);
-
         const data = result.map(r => ({
             name: r._id,
             amount: r.totalAmount
         }));
-
         res.status(200).json(data);
     } catch (error) {
-        console.error("Error fetching claim type amounts:", error);
+        console.error("Error fetching claim type amounts : ", error);
         res.status(500).json({ message: "Server error" });
     }
 };
 
-module.exports = { getClaimCount, getStaffCount, getCreditedClaims, getSubmittedClaims, getPendingClaims, getAwaitingClaims, getInternalExternalClaims, getClaimTypeAmounts };
+// -----------------------------------------------------------------------------------------------------------------
+
+module.exports = { totalClaimsCount, staffsCount, getCreditedClaims, getSubmittedClaims, getPendingClaims, getAwaitingClaims, getInternalExternalClaims, getClaimTypeAmounts };

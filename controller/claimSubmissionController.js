@@ -13,7 +13,7 @@ const unSubmittedClaims = async (req, res) => {
         }
         const entries = await ClaimEntry.find({
             academic_sem_label: currAcademic.academic_sem_label,
-            status: 'Pending'
+            status: 'Unsubmitted'
         }).sort({ createdAt: -1 });
         res.json(entries);
     } catch (error) {
@@ -154,7 +154,7 @@ const submitClaims = async (req, res) => {
             {
                 $set: {
                     submission_date: today,
-                    status: 'Submitted to Principal',
+                    status: 'Processed',
                     payment_report_id: prId
                 }
             }
