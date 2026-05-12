@@ -34,8 +34,8 @@ const staffManage = require('./routes/staffManageRoutes')
 const claimManage = require('./routes/claimManageRoutes')
 const claimEntry = require('./routes/claimEntryRoutes')
 const dashboard = require('./routes/dashboardRoutes')
-const paymentStatus = require("./routes/paymentStatusRoutes")
 const academicManage = require('./routes/academicRoutes')
+const financeProcessing = require('./routes/financeProcessRoutes')
 const dataDeletion = require('./routes/dataDeletionRoutes')
 const claimSubmission = require('./routes/claimSubmissionRoutes')
 const paymentProcess = require('./routes/paymentProcessRoutes')
@@ -58,10 +58,10 @@ app.use('/api/staff', staffManage)
 app.use('/api', claimEntry)
 app.use('/api', dashboard)
 app.use('/api/finance', paymentProcess)
-app.use('/api/admin/payment-status', paymentStatus);
 app.use('/api', academicManage);
 app.use('/api', dataDeletion);
 app.use('/api', claimSubmission);
+app.use('/api', financeProcessing);
 
 // -----------------------------------------------------------------------------------------------------------------
 
@@ -79,10 +79,9 @@ app.get('/claimDatas', async (req, res) => {
 // -----------------------------------------------------------------------------------------------------------------
 
 
-app.get('/api/login', async (req, res) => {
+app.post('/api/login', async (req, res) => { 
 
     try {
-
         const { username, password } = req.body;
         const secretKey = process.env.JWT_SECRET;
         const user = await User.findOne({ username });
