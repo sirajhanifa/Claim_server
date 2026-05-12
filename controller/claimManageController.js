@@ -1,8 +1,8 @@
-const Claim = require('../models/claimtype');
+const ClaimType = require('../models/claimTypes');
 
 const getClaims = async (req, res) => {
   try {
-    const data = await Claim.find();
+    const data = await ClaimType.find();
     res.status(200).json(data);
   } catch (error) {
     console.error(error);
@@ -14,7 +14,7 @@ const addClaim = async (req, res) => {
   const { name, description } = req.body;
 
   try {
-    const newClaim = await Claim.create({
+    const newClaim = await ClaimType.create({
       claim_type_name: name,
       description
     });
@@ -30,7 +30,7 @@ const updateClaim = async (req, res) => {
   const { name, description, amount_settings } = req.body;
 
   try {
-    const updatedClaim = await Claim.findByIdAndUpdate(
+    const updatedClaim = await ClaimType.findByIdAndUpdate(
       req.params.id,
       {
         claim_type_name: name,
@@ -50,7 +50,7 @@ const updateClaim = async (req, res) => {
 
 const deleteClaim = async (req, res) => {
   try {
-    const deletedClaim = await Claim.findByIdAndDelete(req.params.id);
+    const deletedClaim = await ClaimType.findByIdAndDelete(req.params.id);
     if (!deletedClaim) return res.status(404).json({ message: 'Claim not found' });
 
     res.json({ message: 'Claim deleted successfully' });

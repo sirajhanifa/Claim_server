@@ -15,4 +15,4 @@ const staffSchema = new mongoose.Schema({
     bank_name: { type: String, required: false },
 })
 
-module.exports = mongoose.model('staff_manage', staffSchema)
+module.exports = mongoose.model('staff', staffSchema)

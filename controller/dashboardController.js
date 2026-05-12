@@ -1,5 +1,5 @@
-const Claim = require('../models/claimEntry');
-const Staff = require('../models/staffmanage');
+const ClaimType = require('../models/claimTypes');
+const Staff = require('../models/staff');
 const Academic = require('../models/academic');
 
 // Helper to get active semester label
@@ -13,7 +13,7 @@ const getClaimCount = async (req, res) => {
         const activeSemLabel = await getActiveSemesterLabel();
         const matchQuery = activeSemLabel ? { academic_sem_label: activeSemLabel } : {};
 
-        const result = await Claim.aggregate([
+        const result = await ClaimType.aggregate([
             { $match: matchQuery },
             {
                 $group: {
@@ -71,7 +71,7 @@ const getCreditedClaims = async (req, res) => {
         const matchQuery = { status: "Credited" };
         if (activeSemLabel) matchQuery.academic_sem_label = activeSemLabel;
 
-        const result = await Claim.aggregate([
+        const result = await ClaimType.aggregate([
             { $match: matchQuery },
             {
                 $group: {
@@ -99,7 +99,7 @@ const getSubmittedClaims = async (req, res) => {
         const matchQuery = { status: { $in: ["Submitted to Principal", "Credited"] } };
         if (activeSemLabel) matchQuery.academic_sem_label = activeSemLabel;
 
-        const result = await Claim.aggregate([
+        const result = await ClaimType.aggregate([
             { $match: matchQuery },
             {
                 $group: {
@@ -126,7 +126,7 @@ const getPendingClaims = async (req, res) => {
         const matchQuery = { status: "Pending" };
         if (activeSemLabel) matchQuery.academic_sem_label = activeSemLabel;
 
-        const result = await Claim.aggregate([
+        const result = await ClaimType.aggregate([
             { $match: matchQuery },
             {
                 $group: {
@@ -152,7 +152,7 @@ const getAwaitingClaims = async (req, res) => {
         const matchQuery = { status: "Submitted to Principal" };
         if (activeSemLabel) matchQuery.academic_sem_label = activeSemLabel;
 
-        const result = await Claim.aggregate([
+        const result = await ClaimType.aggregate([
             { $match: matchQuery },
             {
                 $group: {
@@ -177,7 +177,7 @@ const getInternalExternalClaims = async (req, res) => {
         const activeSemLabel = await getActiveSemesterLabel();
         const matchQuery = activeSemLabel ? { academic_sem_label: activeSemLabel } : {};
 
-        const result = await Claim.aggregate([
+        const result = await ClaimType.aggregate([
             { $match: matchQuery },
             {
                 $group: {
@@ -213,7 +213,7 @@ const getClaimTypeAmounts = async (req, res) => {
         const activeSemLabel = await getActiveSemesterLabel();
         const matchQuery = activeSemLabel ? { academic_sem_label: activeSemLabel } : {};
 
-        const result = await Claim.aggregate([
+        const result = await ClaimType.aggregate([
             { $match: matchQuery },
             {
                 $group: {

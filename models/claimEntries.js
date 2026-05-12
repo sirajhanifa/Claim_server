@@ -29,4 +29,4 @@ const claimEntrySchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
-module.exports = mongoose.model('ClaimEntry', claimEntrySchema);
+module.exports = mongoose.model('claim_entries', claimEntrySchema);

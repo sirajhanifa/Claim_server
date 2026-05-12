@@ -3,7 +3,7 @@ const connectDB = require('./config/db');
 const cors = require('cors');
 const app = express();
 const Academic = require('./models/academic')
-const ClaimEntry = require('./models/claimEntry')
+const ClaimEntry = require('./models/claimEntries')
 
 // -----------------------------------------------------------------------------------------------------------------
 

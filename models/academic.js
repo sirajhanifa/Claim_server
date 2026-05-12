@@ -24,4 +24,4 @@ const academicSchema = new mongoose.Schema({
     collection: 'academic'
 });
 
-module.exports = mongoose.model('Academic', academicSchema);
+module.exports = mongoose.model('academic', academicSchema);

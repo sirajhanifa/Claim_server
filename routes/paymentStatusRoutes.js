@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const claimEntry = require("../models/claimEntry");
+const ClaimEntry = require("../models/claimEntries");
 
 // -----------------------------------------------------------------------------------------------
 
@@ -8,7 +8,7 @@ router.get("/pr-ids", async (req, res) => {
 
 	try {
 
-		const reports = await claimEntry.aggregate([
+		const reports = await ClaimEntry.aggregate([
 
 			{
 				$match: {
@@ -64,7 +64,7 @@ router.get("/claims/:prId", async (req, res) => {
 
 	try {
 
-		const groupedClaims = await claimEntry.aggregate([
+		const groupedClaims = await ClaimEntry.aggregate([
 
 			{
 				$match: {

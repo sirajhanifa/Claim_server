@@ -1,4 +1,4 @@
-const ClaimEntry = require('../models/claimEntry');
+const ClaimEntry = require('../models/claimEntries');
 const Academic = require('../models/academic');
 
 // -----------------------------------------------------------------------------------------------

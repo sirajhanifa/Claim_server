@@ -1,9 +1,9 @@
-const user = require('../models/user');
+const User = require('../models/user');
 
 // GET all users
 const getUser = async (req, res) => {
   try {
-    const UserData = await user.find();
+    const UserData = await User.find();
     res.status(200).json(UserData);
   } catch (error) {
     console.error(error);
@@ -22,7 +22,7 @@ const addUser = async (req, res) => {
     }
 
     // Create new user
-    const newUser = await user.create({ username, password });
+    const newUser = await User.create({ username, password });
 
     res.status(201).json({ message: 'User created successfully', data: newUser });
   } catch (error) {
@@ -36,7 +36,7 @@ const deleteUser = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const deletedUser = await user.findByIdAndDelete(id);
+    const deletedUser = await User.findByIdAndDelete(id);
 
     if (!deletedUser) {
       return res.status(404).json({ message: 'User not found' });
@@ -59,7 +59,7 @@ const updateUser = async (req, res) => {
       return res.status(400).json({ message: 'Username and password are required' });
     }
 
-    const updatedUser = await user.findByIdAndUpdate(id, { username, password }, { new: true });
+    const updatedUser = await User.findByIdAndUpdate(id, { username, password }, { new: true });
 
     if (!updatedUser) {
       return res.status(404).json({ message: 'User not found' });

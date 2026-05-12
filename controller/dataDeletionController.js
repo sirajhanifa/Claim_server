@@ -1,4 +1,4 @@
-const ClaimEntry = require('../models/claimEntry');
+const ClaimEntry = require('../models/claimEntries');
 const User = require('../models/user');
 
 // -----------------------------------------------------------------------------------------------------------------

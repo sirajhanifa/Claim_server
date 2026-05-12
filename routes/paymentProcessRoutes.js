@@ -2,7 +2,7 @@
 
 const express = require('express');
 const router = express.Router();
-const claimEntry = require('../models/claimEntry');
+const ClaimEntry = require('../models/claimEntries');
 const nodemailer = require('nodemailer');
 
 // -----------------------------------------------------------------------------------------------
@@ -32,7 +32,7 @@ router.get('/pr-ids', async (req, res) => {
 
     try {
 
-        const result = await claimEntry.aggregate([
+        const result = await ClaimEntry.aggregate([
             {
                 $match: {
                     payment_report_id: { $exists: true, $ne: null },
@@ -77,7 +77,7 @@ router.get('/pr-ids', async (req, res) => {
 
 router.get('/claims/:prId', async (req, res) => {
     try {
-        const list = await claimEntry.find({
+        const list = await ClaimEntry.find({
             payment_report_id: req.params.prId,
             status: "Submitted to Principal"
         });
@@ -96,7 +96,7 @@ router.put('/update/:id', async (req, res) => {
     try {
 
         const { credited_date, remarks } = req.body;
-        const updated = await claimEntry.findByIdAndUpdate(
+        const updated = await ClaimEntry.findByIdAndUpdate(
             req.params.id,
             {
                 credited_date,
@@ -128,9 +128,9 @@ router.put('/update-multiple', async (req, res) => {
         let targets = [];
 
         if (Array.isArray(claimIds) && claimIds.length > 0) {
-            targets = await claimEntry.find({ _id: { $in: claimIds } });
+            targets = await ClaimEntry.find({ _id: { $in: claimIds } });
         } else if (payment_report_id) {
-            targets = await claimEntry.find({
+            targets = await ClaimEntry.find({
                 payment_report_id,
                 status: "Submitted to Principal",
                 $or: [{ credited_date: null }, { credited_date: { $exists: false } }]
@@ -143,7 +143,7 @@ router.put('/update-multiple', async (req, res) => {
 
         for (const doc of targets) {
             if (doc.status === "Credited" && doc.credited_date) continue;
-            const updated = await claimEntry.findByIdAndUpdate(
+            const updated = await ClaimEntry.findByIdAndUpdate(
                 doc._id,
                 {
                     credited_date: credited_date || new Date(),

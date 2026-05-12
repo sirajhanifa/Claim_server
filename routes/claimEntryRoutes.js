@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const Staff = require('../models/staffmanage');
-const ClaimEntry = require('../models/claimEntry');
-const ClaimType = require('../models/claimtype');
+const Staff = require('../models/staff');
+const ClaimEntry = require('../models/claimEntries');
+const ClaimType = require('../models/claimTypes');
 const Academic = require('../models/academic')
 
 // -----------------------------------------------------------------------------------------------

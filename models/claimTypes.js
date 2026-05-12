@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const ClaimTypeSchema = new mongoose.Schema({
+const claimTypeSchema = new mongoose.Schema({
     claim_type_name: {
         type: String,
         required: true,
@@ -17,4 +17,4 @@ const ClaimTypeSchema = new mongoose.Schema({
     },
 }, { timestamps: true });
 
-module.exports = mongoose.model('ClaimType', ClaimTypeSchema);
+module.exports = mongoose.model('claim_types', claimTypeSchema);
