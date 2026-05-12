@@ -1,32 +1,48 @@
 const mongoose = require('mongoose');
 
 const claimEntrySchema = new mongoose.Schema({
+
     academic_sem_label: { type: String, required: true },
-    claim_type_name: { type: String, required: true },
+
+    // Staff Information
     staff_id: { type: String, required: true },
     staff_name: { type: String, required: true },
-    department: { type: String, required: true },
     designation: { type: String, required: true },
+    department: { type: String, required: true },
     internal_external: { type: String, required: true },
     category: { type: String, required: false },
     college: { type: String, required: false },
-    phone_number: { type: String, required: true },
-    email: { type: String, required: true },
-    entry_date: { type: Date, required: true },
-    submission_date: { type: Date },
-    credited_date: { type: Date },
-    tds_amount: { type: Number, required: true },
-    amount: { type: Number, required: true },
-    ifsc_code: { type: String, required: true },
-    account_no: { type: String, required: true },
+
+     // Claim Information
+    claim_type_name: { type: String, required: true },
     status: {
-        type: String, default: 'Pending',
-        enum: ['Pending', 'Submitted to Principal', 'Credited']
+        type: String,
+        default: 'Unsubmitted',
+        enum: ['Unsubmitted', 'Processed', 'Submitted', 'Credited']
     },
     payment_report_id: {
         type: String,
         default: ''
-    }
+    },
+
+    // Contact Information
+    phone_number: { type: String, required: true },
+    email: { type: String, required: true },
+
+    // Banking Information
+    account_no: { type: String, required: true },
+    ifsc_code: { type: String, required: true },
+
+    // Financial Information
+    tds_amount: { type: Number, required: true, default: -1 },
+    amount: { type: Number, required: true },
+
+    // Date Information
+    entry_date: { type: Date, required: true },
+    processed_date: { type: Date, default: null },
+    submitted_date: { type: Date, default: null },
+    credited_date: { type: Date, default: null }
+
 }, { timestamps: true });
 
-module.exports = mongoose.model('claim_entries', claimEntrySchema);
+module.exports = mongoose.model('claim_entries', claimEntrySchema); q

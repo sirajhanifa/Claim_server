@@ -19,9 +19,6 @@ const academicSchema = new mongoose.Schema({
         default: false,
         required: true,
     }
-}, {
-    timestamps: false,
-    collection: 'academic'
-});
+}, { timestamps: true });
 
 module.exports = mongoose.model('academic', academicSchema);
