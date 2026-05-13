@@ -113,7 +113,7 @@ const getSubmittedClaims = async (req, res) => {
     try {
 
         const activeSemLabel = await getActiveSemesterLabel();
-        const matchQuery = { status: { $in: ["Processed", "Credited"] } };
+        const matchQuery = { status: { $in: ["Submitted", "Credited"] } };
         if (activeSemLabel) matchQuery.academic_sem_label = activeSemLabel;
         const result = await ClaimEntry.aggregate([
             { $match: matchQuery },
