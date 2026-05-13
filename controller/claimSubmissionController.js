@@ -26,7 +26,7 @@ const unSubmittedClaims = async (req, res) => {
 
 // Delete claim by id
 
-const deleteClaim = async (req, res) => {
+const claimDelete = async (req, res) => {
     try {
         const deleted = await ClaimEntry.findByIdAndDelete(req.params.id);
         if (!deleted) {
@@ -34,9 +34,42 @@ const deleteClaim = async (req, res) => {
         }
         return res.json({ message: "Claim deleted successfully" });
     } catch (err) {
+        console.error('Error deleting claim : ', err);
         return res.status(500).json({ message: "Server error" });
     }
 }
+
+// -----------------------------------------------------------------------------------------------
+
+// Update claim amount by id
+
+const updateClaimAmount = async (req, res) => {
+
+    try {
+
+        const { id } = req.params;
+        const { amount } = req.body;
+
+        if (amount === undefined || isNaN(Number(amount))) {
+            return res.status(400).json({ message: 'Valid amount is required' });
+        }
+
+        const updatedClaim = await ClaimEntry.findByIdAndUpdate(
+            id,
+            { amount: Number(amount) },
+            { new: true, runValidators: true }
+        );
+
+        if (!updatedClaim) {
+            return res.status(404).json({ message: 'Claim not found' });
+        }
+
+        return res.json({ message: 'Claim amount updated successfully', claim: updatedClaim });
+    } catch (err) {
+        console.error('Error updating claim amount:', err);
+        return res.status(500).json({ message: 'Server error' });
+    }
+};
 
 // -----------------------------------------------------------------------------------------------
 
@@ -176,4 +209,4 @@ const submitClaims = async (req, res) => {
 
 // -----------------------------------------------------------------------------------------------
 
-module.exports = { unSubmittedClaims, submitClaims, deleteClaim };
+module.exports = { unSubmittedClaims, submitClaims, claimDelete, updateClaimAmount };
