@@ -74,7 +74,7 @@ const getClaimsByBatch = async (req, res) => {
                     payment_report_id: { $first: "$payment_report_id" },
                     totalAmount: { $sum: "$amount" },
                     count: { $sum: 1 },
-                    submission_date: { $first: "$submission_date" },
+                    submitted_date: { $first: "$submitted_date" },
                     credited_date: { $first: "$credited_date" },
                     status: { $first: "$status" }
                 }

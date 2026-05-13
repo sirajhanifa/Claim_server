@@ -10,7 +10,7 @@ const getActiveSemesterLabel = async () => {
     const activeAcademic = await Academic.findOne({ active_sem: true });
     return activeAcademic ? activeAcademic.academic_sem_label : null;
 };
-
+ 
 // -----------------------------------------------------------------------------------------------------------------
 
 const totalClaimsCount = async (req, res) => {
@@ -140,7 +140,7 @@ const getPendingClaims = async (req, res) => {
     try {
 
         const activeSemLabel = await getActiveSemesterLabel();
-        const matchQuery = { status: "Unsubmitted" };
+        const matchQuery = { status: { $in: ["Unsubmitted", "Processed"] } };
         if (activeSemLabel) matchQuery.academic_sem_label = activeSemLabel;
         const result = await ClaimEntry.aggregate([
             { $match: matchQuery },
@@ -167,20 +167,49 @@ const getAwaitingClaims = async (req, res) => {
     try {
 
         const activeSemLabel = await getActiveSemesterLabel();
-        const matchQuery = { status: "Processed" };
-        if (activeSemLabel) matchQuery.academic_sem_label = activeSemLabel;
+
+        const matchQuery = {
+            status: { $in: ["Submitted"] }
+        };
+
+        if (activeSemLabel) {
+            matchQuery.academic_sem_label = activeSemLabel;
+        }
+
         const result = await ClaimEntry.aggregate([
             { $match: matchQuery },
+
             {
                 $group: {
                     _id: null,
                     awaitingClaims: { $sum: 1 },
-                    awaitingAmount: { $sum: "$amount" }
+                    awaitingAmount: { $sum: "$amount" },
+                    uniquePaymentReports: {
+                        $addToSet: "$payment_report_id"
+                    }
+                }
+            },
+
+            {
+                $project: {
+                    _id: 0,
+                    awaitingClaims: 1,
+                    awaitingAmount: 1,
+                    uniqueReportCount: {
+                        $size: "$uniquePaymentReports"
+                    }
                 }
             }
         ]);
-        const { awaitingClaims, awaitingAmount } = result[0] || { awaitingClaims: 0, awaitingAmount: 0 };
-        res.status(200).json({ awaitingClaims, awaitingAmount });
+
+        const data = result[0] || {
+            awaitingClaims: 0,
+            awaitingAmount: 0,
+            uniqueReportCount: 0
+        };
+
+        res.status(200).json(data);
+
     } catch (error) {
         console.error("Error fetching awaiting claims : ", error);
         res.status(500).json({ message: "Server error" });
@@ -190,33 +219,54 @@ const getAwaitingClaims = async (req, res) => {
 // -----------------------------------------------------------------------------------------------------------------
 
 const getInternalExternalClaims = async (req, res) => {
-
+    
     try {
 
         const activeSemLabel = await getActiveSemesterLabel();
-        const matchQuery = activeSemLabel ? { academic_sem_label: activeSemLabel } : {};
+
+        const matchQuery = activeSemLabel
+            ? { academic_sem_label: activeSemLabel }
+            : {};
+
         const result = await ClaimEntry.aggregate([
             { $match: matchQuery },
+
             {
                 $group: {
-                    _id: "$internal_external",  
+                    _id: "$internal_external",
                     count: { $sum: 1 },
                     amount: { $sum: "$amount" }
                 }
             }
         ]);
 
-        let internalCount = 0;
-        let externalCount = 0;
+        let internal = {
+            count: 0,
+            amount: 0
+        };
+
+        let external = {
+            count: 0,
+            amount: 0
+        };
 
         result.forEach(r => {
-            if (r._id === "INTERNAL") internalCount = r.count;
-            if (r._id === "EXTERNAL") externalCount = r.count;
+
+            if (r._id === "INTERNAL") {
+                internal.count = r.count;
+                internal.amount = r.amount;
+            }
+
+            if (r._id === "EXTERNAL") {
+                external.count = r.count;
+                external.amount = r.amount;
+            }
+
         });
 
         res.status(200).json({
-            internal: internalCount,
-            external: externalCount
+            internal,
+            external
         });
 
     } catch (error) {

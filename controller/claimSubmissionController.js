@@ -85,10 +85,8 @@ const submitClaims = async (req, res) => {
         // BASE FILTER
 
         const baseFilter = {
-            $or: [
-                { submission_date: null },
-                { submission_date: '' }
-            ]
+            status: 'Unsubmitted',
+            submitted_date: { $in: [null, ''] }
         };
 
         // Claim Type Filter
@@ -186,7 +184,7 @@ const submitClaims = async (req, res) => {
             },
             {
                 $set: {
-                    submission_date: today,
+                    submitted_date: today,
                     status: 'Processed',
                     payment_report_id: prId
                 }
@@ -197,7 +195,7 @@ const submitClaims = async (req, res) => {
 
         return res.status(200).json({
             message: 'Claims submitted successfully',
-            prId, submission_date: today
+            prId, submitted_date: today
         });
 
     } catch (error) {
