@@ -4,14 +4,15 @@ const express = require('express');
 const router = express.Router();
 const ClaimEntry = require('../models/claimEntries');
 const nodemailer = require('nodemailer');
+require('dotenv').config({ path: '../.env', quiet: true });
 
 // -----------------------------------------------------------------------------------------------
 
 const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: {
-        user: "jmccoeclaim@gmail.com",
-        pass: "wzrf dhdt ltkx mfjj"
+        user: process.env.MAIL_USER,
+        pass: process.env.MAIL_PASS
     }
 });
 
