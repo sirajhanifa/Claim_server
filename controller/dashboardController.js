@@ -56,8 +56,8 @@ const staffsCount = async (req, res) => {
         let external = 0;
 
         result.forEach((r) => {
-            if (r._id === "INTERNAL") internal = r.count;
-            if (r._id === "EXTERNAL") external = r.count;
+            if (r._id === "Internal") internal = r.count;
+            if (r._id === "External") external = r.count;
         });
 
         // console.log(internal, external)
@@ -252,12 +252,12 @@ const getInternalExternalClaims = async (req, res) => {
 
         result.forEach(r => {
 
-            if (r._id === "INTERNAL") {
+            if (r._id === "Internal") {
                 internal.count = r.count;
                 internal.amount = r.amount;
             }
 
-            if (r._id === "EXTERNAL") {
+            if (r._id === "External") {
                 external.count = r.count;
                 external.amount = r.amount;
             }
