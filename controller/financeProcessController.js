@@ -85,6 +85,7 @@ const getClaimsByBatch = async (req, res) => {
         const processedCount = allClaims.filter(c => c.status === "Processed").length;
         res.json({ processedCount, claims: allClaims });
     } catch (err) {
+        console.error('Error fetching claims by batch : ', err);
         res.status(500).json({ error: "Failed to fetch claims" });
     }
 };
