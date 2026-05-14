@@ -139,10 +139,10 @@ const submitClaims = async (req, res) => {
             });
         }
 
-        // Example: "Nov-26"
+        // Example: "Apr-26" => "A26"
+
         const semLabel = activeAcademic.academic_sem_label;
 
-        // Convert Nov-26 => N26
         const [month, yearPart] = semLabel.split('-');
 
         const shortSemLabel =
@@ -157,6 +157,8 @@ const submitClaims = async (req, res) => {
             "SKILLED ASSISTANT": "SKILLED",
             "ABILITY ENHANCEMENT CLAIM": "AEC",
             "QPS": "QPS",
+            "OTHER": "OTHER",
+            "ALL": "ALL",
             "SCRUTINY CLAIM": "SCRU",
             "CIA REAPEAR CLAIM": "CIA",
             "CAMP CLAIM": "CAMP"
@@ -164,17 +166,30 @@ const submitClaims = async (req, res) => {
 
         const claimPrefix = prefixMap[claimType] || "OTHER";
 
-        // COUNT EXISTING IDS
+        // CURRENT CLAIM COUNT
+        // Example:
+        // activeAcademic.claim_counters.SKILLED = 2
 
-        const totalSubmitted = await ClaimEntry.countDocuments({
-            payment_report_id: {
-                $regex: `^${claimPrefix}-${shortSemLabel}-`
-            }
-        });
+        const currentClaimCount =
+            activeAcademic.claim_counters?.[claimPrefix] || 0;
+
+        // NEXT CLAIM COUNT
+
+        const nextClaimCount = currentClaimCount + 1;
+
+        // TOTAL BATCH COUNT
+
+        const currentTotalCount =
+            activeAcademic.claim_counters?.TOTAL || 0;
+
+        const nextTotalCount = currentTotalCount + 1;
 
         // FINAL PAYMENT REPORT ID
-        // Example: PRAC-N26-001
-        const prId = `${claimPrefix}-${shortSemLabel}-${String(totalSubmitted + 1).padStart(3, '0')}`;
+        // Example:
+        // SKILLED-A26-03/15
+
+        const prId =
+            `${claimPrefix}-${shortSemLabel}-${String(nextClaimCount).padStart(2, '0')}/${String(nextTotalCount).padStart(2, '0')}`;
 
         // UPDATE CLAIMS
 
@@ -187,6 +202,23 @@ const submitClaims = async (req, res) => {
                     submitted_date: today,
                     status: 'Processed',
                     payment_report_id: prId
+                }
+            }
+        );
+
+        // UPDATE ACADEMIC COUNTERS
+
+        await Academic.updateOne(
+            { _id: activeAcademic._id },
+            {
+                $inc: {
+                    [`claim_counters.${claimPrefix}`]: 1,
+                    'claim_counters.TOTAL': 1,
+                    total_claim_count: unsubmittedClaims.length,
+                    total_claim_amount: unsubmittedClaims.reduce(
+                        (sum, c) => sum + (Number(c.amount) || 0),
+                        0
+                    )
                 }
             }
         );
