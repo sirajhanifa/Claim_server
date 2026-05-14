@@ -11,18 +11,21 @@ const searchPhone = async (req, res) => {
 
 	try {
 
-		let prefix = req.params.prefix;
-		if (!prefix) return res.json([]);
-		const start = Number(prefix + "0".repeat(10 - prefix.length));
-		const end = Number(prefix + "9".repeat(10 - prefix.length));
+		const searchText = (req.params.prefix || '').trim();
+		if (!searchText) return res.json([]);
+
+		const escapedText = searchText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 		const staff = await Staff.find(
 			{
-				phone_no: { $gte: start, $lte: end }
+				$or: [
+					{ staff_name: { $regex: escapedText, $options: 'i' } },
+					{ phone_no: { $regex: escapedText } }
+				]
 			},
-			{ phone_no: 1, _id: 0 }
+			{ phone_no: 1, staff_name: 1, _id: 0 }
 		)
 			.limit(10)
-			.sort({ phone_no: 1 });
+			.sort({ staff_name: 1 });
 
 		res.json(staff);
 
