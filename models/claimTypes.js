@@ -11,6 +11,10 @@ const claimTypeSchema = new mongoose.Schema({
         type: String,
         default: '',
     },
+    isActive: {
+        type: Boolean,
+        default: true,
+    },  
     amount_settings: {
         type: mongoose.Schema.Types.Mixed,
         default: {},

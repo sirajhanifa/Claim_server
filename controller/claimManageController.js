@@ -34,23 +34,26 @@ const addClaim = async (req, res) => {
 
 const updateClaim = async (req, res) => {
 
-    const { name, description, amount_settings } = req.body;
+    const { name, description, amount_settings, isActive } = req.body;
 
     try {
+
+        const updateData = {};
+        if (name !== undefined) updateData.claim_type_name = name;
+        if (description !== undefined) updateData.description = description;
+        if (amount_settings !== undefined) updateData.amount_settings = amount_settings;
+        if (isActive !== undefined) updateData.isActive = isActive;
+
         const updatedClaim = await ClaimType.findByIdAndUpdate(
             req.params.id,
-            {
-                claim_type_name: name,
-                description,
-                amount_settings: amount_settings || {},
-            },
-            { new: true }
+            updateData,
+            { new: true, runValidators: true }
         );
 
         if (!updatedClaim) return res.status(404).json({ message: 'Claim not found' });
-
         res.json({ message: 'Claim updated successfully', data: updatedClaim });
     } catch (err) {
+        console.error(err);
         res.status(500).json({ message: 'Server error' });
     }
 };
