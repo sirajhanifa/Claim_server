@@ -199,7 +199,7 @@ const submitClaims = async (req, res) => {
             },
             {
                 $set: {
-                    submitted_date: today,
+                    processed_date: today,
                     status: 'Processed',
                     payment_report_id: prId
                 }
@@ -227,7 +227,7 @@ const submitClaims = async (req, res) => {
 
         return res.status(200).json({
             message: 'Claims submitted successfully',
-            prId, submitted_date: today
+            prId, processed_date: today
         });
 
     } catch (error) {

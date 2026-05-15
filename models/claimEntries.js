@@ -67,7 +67,7 @@ const claimEntrySchema = new mongoose.Schema({
 
     payment_report_id: {
         type: String,
-        default: '',
+        default: null,
         trim: true
     },
 
