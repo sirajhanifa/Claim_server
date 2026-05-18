@@ -128,6 +128,12 @@ const claimEntrySchema = new mongoose.Schema({
     credited_date: {
         type: Date,
         default: null
+    },
+
+    email_status: {
+        type: String,
+        enum: ['pending', 'sent', 'failed'],
+        default: 'pending'
     }
 
 }, { timestamps: true });
