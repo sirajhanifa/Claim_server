@@ -39,15 +39,28 @@ transporter.verify((err, success) => {
 // Single claim email (HTML)
 
 const buildSingleEmailHtml = (name, amount, claimType) => {
+
     const safeName = escapeHtml(name);
     const safeAmount = escapeHtml(amount.toString());
     const safeClaimType = escapeHtml(claimType);
+    
     return `
-        <div style="font-family: Arial, sans-serif; max-width: 600px;">
-            <h3>Confirmation of Successful Claim Credit</h3>
-            <p>Dear <strong>${safeName}</strong>,</p>
-            <p>Your claim of <strong>₹${safeAmount}</strong> for <strong>${safeClaimType}</strong> has been credited.</p>
-            <br/><p>Regards,<br/>Controller of Examinations<br/>Jamal Mohamed College</p>
+        <div style="font-family: Arial, sans-serif; max-width: 600px; line-height: 1.5;">
+            <h3 style="margin-bottom: 12px;">
+                Confirmation of Successful Claim Credit
+            </h3>
+            <p style="margin: 0 0 10px 0;">
+                Dear <strong>${safeName}</strong>,
+            </p>
+            <p style="margin: 0 0 12px 0;">
+                Your claim of <strong>₹${safeAmount}</strong> for 
+                <strong>${safeClaimType}</strong> has been credited.
+            </p>
+            <p style="margin: 12px 0 0 0;">
+                Regards,<br/>
+                Controller of Examinations<br/>
+                Jamal Mohamed College
+            </p>
         </div>
     `;
 };
@@ -56,6 +69,7 @@ const buildSingleEmailHtml = (name, amount, claimType) => {
 // Combined email for multiple claims (HTML)
 
 const buildCombinedEmailHtml = (name, claims, totalAmount) => {
+
     const safeName = escapeHtml(name);
     const safeTotal = escapeHtml(totalAmount.toString());
     let itemsHtml = '<ul>';
@@ -63,13 +77,26 @@ const buildCombinedEmailHtml = (name, claims, totalAmount) => {
         itemsHtml += `<li>${escapeHtml(claim.claim_type_name)} - ₹${escapeHtml(claim.amount.toString())}</li>`;
     }
     itemsHtml += '</ul>';
-    return `
-        <div style="font-family: Arial, sans-serif; max-width: 600px;">
-            <h3>Confirmation of Successful Claims Credit</h3>
-            <p>Dear <strong>${safeName}</strong>,</p>
-            <p>We have credited a total of <strong>₹${safeTotal}</strong> to your bank account, covering the following claims :</p>
+
+   return `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; line-height: 1.5;">
+            <h3 style="margin-bottom: 12px;">
+                Confirmation of Successful Claims Credit
+            </h3>
+            <p style="margin: 0 0 10px 0;">
+                Dear <strong>${safeName}</strong>,
+            </p>
+            <p style="margin: 0 0 10px 0;">
+                We have credited a total of 
+                <strong>₹${safeTotal}</strong> to your bank account,
+                covering the following claims:
+            </p>
             ${itemsHtml}
-            <br/><p>Regards,<br/>Controller of Examinations<br/>Jamal Mohamed College</p>
+            <p style="margin: 12px 0 0 0;">
+                Regards,<br/>
+                Controller of Examinations<br/>
+                Jamal Mohamed College
+            </p>
         </div>
     `;
 };
