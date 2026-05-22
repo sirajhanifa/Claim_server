@@ -11,7 +11,6 @@ const claimEntrySchema = new mongoose.Schema({
     // Staff Information
     staff_id: {
         type: String,
-        required: true,
         trim: true
     },
 

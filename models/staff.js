@@ -5,7 +5,6 @@ const staffSchema = new mongoose.Schema({
     // Staff Basic Details
     staff_id: {
         type: String,
-        required: true,
         trim: true
     },
 
