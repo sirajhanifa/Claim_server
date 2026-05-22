@@ -1,6 +1,20 @@
 const Academic = require('../models/academic');
 
-// -----------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------------------------------------------
+
+const isValidSemLabel = (label) => {
+    const regex = /^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)-\d{2}$/;
+    return regex.test(label);
+};
+
+const isValidAcademicYear = (year) => {
+    const regex = /^\d{4}-\d{4}$/;
+    if (!regex.test(year)) return false;
+    const [start, end] = year.split('-').map(Number);
+    return end === start + 1;
+};
+
+// -----------------------------------------------------------------------------------------------------------------
 
 // Get all academics
 
@@ -13,13 +27,26 @@ const getAcademics = async (req, res) => {
     }
 };
 
-// -----------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------------------------------------------
 
 // Add new academic
 
 const addAcademic = async (req, res) => {
+
     try {
+
         const { academic_sem_type, academic_sem_label, academic_year, active_sem } = req.body;
+
+        if (!academic_sem_label || !isValidSemLabel(academic_sem_label)) {
+            return res.status(400).json({ 
+                message: "Semester label must follow the format 'Mon-YY' (e.g., Jun-26)" 
+            });
+        }
+        if (!academic_year || !isValidAcademicYear(academic_year)) {
+            return res.status(400).json({ 
+                message: "Academic year must be 'YYYY-YYYY' where second year = first year + 1 (e.g., 2026-2027)" 
+            });
+        }
 
         if (active_sem) {
             await Academic.updateMany({}, { active_sem: false });
@@ -39,14 +66,27 @@ const addAcademic = async (req, res) => {
     }
 };
 
-// -----------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------------------------------------------
 
 // Update academic
 
 const updateAcademic = async (req, res) => {
+
     try {
+
         const { id } = req.params;
-        const { active_sem } = req.body;
+        const { academic_sem_label, academic_year, active_sem } = req.body;
+
+        if (academic_sem_label && !isValidSemLabel(academic_sem_label)) {
+            return res.status(400).json({ 
+                message: "Semester label must follow the format 'Mon-YY' (e.g., Jun-26)" 
+            });
+        }
+        if (academic_year && !isValidAcademicYear(academic_year)) {
+            return res.status(400).json({ 
+                message: "Academic year must be 'YYYY-YYYY' (e.g., 2026-2027)" 
+            });
+        }
 
         if (active_sem) {
             await Academic.updateMany({ _id: { $ne: id } }, { active_sem: false });
@@ -63,7 +103,7 @@ const updateAcademic = async (req, res) => {
     }
 };
 
-// -----------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------------------------------------------
 
 // Delete academic
 
@@ -71,7 +111,6 @@ const deleteAcademic = async (req, res) => {
     try {
         const { id } = req.params;
         const deletedAcademic = await Academic.findByIdAndDelete(id);
-
         if (!deletedAcademic) {
             return res.status(404).json({ message: "Academic record not found" });
         }
@@ -81,7 +120,7 @@ const deleteAcademic = async (req, res) => {
     }
 };
 
-// -----------------------------------------------------------------------------------------------
+// -----------------------------------------------------------------------------------------------------------------
 
 module.exports = {
     getAcademics,

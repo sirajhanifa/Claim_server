@@ -55,16 +55,12 @@ const getBatches = async (req, res) => {
 // Returns ALL claims for a given batch 
 
 const getClaimsByBatch = async (req, res) => {
-
     try {
-
         const allClaims = await ClaimEntry.aggregate([
             { $match: { payment_report_id: req.params.prId } },
             { $sort: { staff_name: 1 } }
         ]);
-
         const processedCount = allClaims.filter(c => c.status === "Processed").length;
-        console.log(allClaims)
         res.json({ processedCount, claims: allClaims });
     } catch (err) {
         console.error('Error fetching claims by batch : ', err);

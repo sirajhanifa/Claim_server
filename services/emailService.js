@@ -110,7 +110,7 @@ const sendSingleEmail = async (claim) => {
     const mailOptions = {
         from: process.env.MAIL_USER,
         to: claim.email,
-        subject: `Confirmation of Successful Claim Credit - Total ₹${claim.amount}`,
+        subject: `Jamal Mohamed College - COE - Notification of Claims Credit`,
         html: buildSingleEmailHtml(claim.staff_name, claim.amount, claim.claim_type_name),
         text: `Dear ${claim.staff_name},\n\nYour claim of Rs. ${claim.amount} for ${claim.claim_type_name} has been credited.\nRegards,\nController of Examinations\nJamal Mohamed College`
     };
@@ -163,7 +163,7 @@ const sendGroupedEmails = async (claims) => {
         const mailOptions = {
             from: process.env.MAIL_USER,
             to: email,
-            subject: `Confirmation of Successful Claims Credit - Total ₹${totalAmount}`,
+            subject: `Jamal Mohamed College - COE - Notification of Claims Credit`,
             html: buildCombinedEmailHtml(name, claimGroup, totalAmount),
             text: `Dear ${name},\n\nWe have credited a total of Rs. ${totalAmount} to your bank account for the following claims :\n${claimGroup.map(c => `- ${c.claim_type_name}: Rs. ${c.amount}`).join('\n')}\nRegards,\nController of Examinations\nJamal Mohamed College`
         };
