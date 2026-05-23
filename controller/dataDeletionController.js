@@ -1,5 +1,6 @@
 const ClaimEntry = require('../models/claimEntries');
 const User = require('../models/user');
+const Academic = require('../models/academic');
 
 // -----------------------------------------------------------------------------------------------------------------
 
@@ -23,6 +24,22 @@ const deleteDataByAcademicSemLabel = async (req, res) => {
         if (adminUser.password !== admin_password) {
             return res.status(401).json({ message: "Invalid admin password." });
         }
+
+        // Calculate total amount and count of all claims for this semester before deleting
+        const claims = await ClaimEntry.find({ academic_sem_label });
+        const totalAmount = claims.reduce((sum, c) => sum + (Number(c.amount) || 0), 0);
+        const totalCount = claims.length;
+
+        // Update the academic table specific row
+        await Academic.updateOne(
+            { academic_sem_label },
+            {
+                $set: {
+                    total_claim_amount: totalAmount,
+                    total_claim_count: totalCount
+                }
+            }
+        );
 
         // Proceed to delete claims
         const result = await ClaimEntry.deleteMany({ academic_sem_label });
