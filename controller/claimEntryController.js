@@ -62,7 +62,8 @@ const getStaffByPhone = async (req, res) => {
 			branch_name: staff.branch_name,
 			branch_code: staff.branch_code,
 			ifsc_code: staff.ifsc_code,
-			bank_acc_no: staff.bank_acc_no
+			bank_acc_no: staff.bank_acc_no,
+			bank_city_name: staff.bank_city_name || ''
 		});
 	} catch (error) {
 		console.error('Error fetching staff : ', error);
@@ -77,8 +78,14 @@ const getStaffByPhone = async (req, res) => {
 const postClaim = async (req, res) => {
 	try {
 		const active_academic = await Academic.findOne({ active_sem: true });
+		if (!active_academic) {
+			return res.status(404).json({ error: "Active academic semester not found" });
+		}
 		const { academic_sem_label } = active_academic;
 		const claim = new ClaimEntry({ ...req.body, academic_sem_label });
+		active_academic.total_claim_amount += Number(claim.amount);
+		active_academic.total_claim_count += 1;
+		await active_academic.save();
 		await claim.save();
 		res.status(201).json({ message: "Claim saved" });
 	} catch (err) {

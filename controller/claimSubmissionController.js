@@ -32,6 +32,17 @@ const claimDelete = async (req, res) => {
         if (!deleted) {
             return res.status(404).json({ message: "Claim not found" });
         }
+        if (deleted.academic_sem_label) {
+            await Academic.updateOne(
+                { academic_sem_label: deleted.academic_sem_label },
+                {
+                    $inc: {
+                        total_claim_count: -1,
+                        total_claim_amount: -Number(deleted.amount || 0)
+                    }
+                }
+            );
+        }
         return res.json({ message: "Claim deleted successfully" });
     } catch (err) {
         console.error('Error deleting claim : ', err);
@@ -54,17 +65,26 @@ const updateClaimAmount = async (req, res) => {
             return res.status(400).json({ message: 'Valid amount is required' });
         }
 
-        const updatedClaim = await ClaimEntry.findByIdAndUpdate(
-            id,
-            { amount: Number(amount) },
-            { new: true, runValidators: true }
-        );
-
-        if (!updatedClaim) {
+        const claim = await ClaimEntry.findById(id);
+        if (!claim) {
             return res.status(404).json({ message: 'Claim not found' });
         }
 
-        return res.json({ message: 'Claim amount updated successfully', claim: updatedClaim });
+        const oldAmount = Number(claim.amount) || 0;
+        const newAmount = Number(amount);
+        const diff = newAmount - oldAmount;
+
+        claim.amount = newAmount;
+        await claim.save();
+
+        if (claim.academic_sem_label) {
+            await Academic.updateOne(
+                { academic_sem_label: claim.academic_sem_label },
+                { $inc: { total_claim_amount: diff } }
+            );
+        }
+
+        return res.json({ message: 'Claim amount updated successfully', claim });
     } catch (err) {
         console.error('Error updating claim amount:', err);
         return res.status(500).json({ message: 'Server error' });

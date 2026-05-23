@@ -27,7 +27,7 @@ const addStaff = async (req, res) => {
     const {
         staff_id, staff_name, department, designation, category,
         phone_no, email, college, bank_acc_no, ifsc_code,
-        employment_type, bank_name
+        employment_type, bank_name, bank_city_name
     } = req.body;
 
     try {
@@ -44,7 +44,7 @@ const addStaff = async (req, res) => {
         const newStaff = await Staff.create({
             staff_id, staff_name, department, designation, category,
             phone_no, email, college, bank_acc_no, ifsc_code,
-            employment_type, bank_name
+            employment_type, bank_name, bank_city_name
         });
 
         res.status(201).json({ message: 'Staff added successfully', data: newStaff });

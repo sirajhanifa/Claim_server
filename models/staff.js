@@ -75,6 +75,12 @@ const staffSchema = new mongoose.Schema({
         uppercase: true
     },
 
+    bank_city_name: {
+        type: String,
+        trim: true,
+        default: null
+    },
+
 }, { timestamps: true })
 
 module.exports = mongoose.model('staff', staffSchema)

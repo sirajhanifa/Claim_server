@@ -96,6 +96,12 @@ const claimEntrySchema = new mongoose.Schema({
         trim: true
     },
 
+    bank_city_name: {
+        type: String,
+        trim: true,
+        default: null
+    },
+
     // Financial Information
     tds_amount: {
         type: Number,
