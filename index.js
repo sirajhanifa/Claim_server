@@ -84,7 +84,7 @@ app.post('/api/login', async (req, res) => {
     try {
         const { username, password } = req.body;
         const secretKey = process.env.JWT_SECRET;
-        const user = await User.findOne({ username });
+        const user = await User.findOne({ username: { $regex: new RegExp(`^${username}$`, 'i') } });
         if (!user) { return res.status(404).json({ message: 'User not found' }) }
         if (user.password !== password) { return res.status(401).json({ message: 'Incorrect password' }) }
         const token = jwt.sign({ username: user.username }, secretKey, { expiresIn: '1h' });

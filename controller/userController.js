@@ -68,4 +68,36 @@ const updateUser = async (req, res) => {
 
 // -----------------------------------------------------------------------------------------------------------------
 
-module.exports = { getUser, addUser, deleteUser, updateUser };
+// CHANGE password
+
+const changePassword = async (req, res) => {
+
+    try {
+
+        const { username, currentPassword, newPassword } = req.body;
+        if (!username || !currentPassword || !newPassword) {
+            return res.status(400).json({ message: 'All fields are required' });
+        }
+
+        const user = await User.findOne({ username: { $regex: new RegExp(`^${username}$`, 'i') } });
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        if (user.password !== currentPassword) {
+            return res.status(401).json({ message: 'Incorrect current password' });
+        }
+
+        user.password = newPassword;
+        await user.save();
+
+        res.status(200).json({ message: 'Password changed successfully' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Failed to change password' });
+    }
+};
+
+// -----------------------------------------------------------------------------------------------------------------
+
+module.exports = { getUser, addUser, deleteUser, updateUser, changePassword };
