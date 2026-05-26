@@ -19,19 +19,12 @@ const getUser = async (req, res) => {
 // POST: Add new user
 
 const addUser = async (req, res) => {
-
     try {
-
-        const { username, password } = req.body;
-
-        // Validation
+        const { username, password, role } = req.body;
         if (!username || !password) {
             return res.status(400).json({ message: 'Username and password are required' });
         }
-
-        // Create new user
-        const newUser = await User.create({ username, password });
-
+        const newUser = await User.create({ username, password, role });
         res.status(201).json({ message: 'User created successfully', data: newUser });
     } catch (error) {
         console.error(error);
@@ -62,9 +55,9 @@ const deleteUser = async (req, res) => {
 const updateUser = async (req, res) => {
     try {
         const { id } = req.params;
-        const { username, password } = req.body;
+        const { username, password, role } = req.body;
         if (!username || !password) { return res.status(400).json({ message: 'Username and password are required' }) }
-        const updatedUser = await User.findByIdAndUpdate(id, { username, password }, { new: true });
+        const updatedUser = await User.findByIdAndUpdate(id, { username, password, role }, { new: true });
         if (!updatedUser) { return res.status(404).json({ message: 'User not found' }) }
         res.status(200).json({ message: 'User updated successfully', data: updatedUser });
     } catch (error) {
