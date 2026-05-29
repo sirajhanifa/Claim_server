@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { totalClaimsCount, staffsCount, getCreditedClaims, getSubmittedClaims, getPendingClaims, getAwaitingClaims, getInternalExternalClaims, getClaimTypeAmounts } = require('../controller/dashboardController');
+const { totalClaimsCount, staffsCount, getAcademicTrends, getCreditedClaims, getSubmittedClaims, getPendingClaims, getAwaitingClaims, getInternalExternalClaims, getClaimTypeAmounts } = require('../controller/dashboardController');
 
 // -----------------------------------------------------------------------------------------------
 
@@ -12,6 +12,7 @@ router.get("/pendingclaims", getPendingClaims);
 router.get("/awaitingclaims", getAwaitingClaims);
 router.get("/internalexternalclaims", getInternalExternalClaims);
 router.get("/claimtypeamounts", getClaimTypeAmounts);
+router.get('/academic-trends', getAcademicTrends);
 
 // -----------------------------------------------------------------------------------------------
 

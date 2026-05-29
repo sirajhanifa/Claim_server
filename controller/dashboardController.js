@@ -306,4 +306,27 @@ const getClaimTypeAmounts = async (req, res) => {
 
 // -----------------------------------------------------------------------------------------------------------------
 
-module.exports = { totalClaimsCount, staffsCount, getCreditedClaims, getSubmittedClaims, getPendingClaims, getAwaitingClaims, getInternalExternalClaims, getClaimTypeAmounts };
+// Get academic trends for last 6 semesters
+
+const getAcademicTrends = async (req, res) => {
+    try {
+        const academicRecords = await Academic.find()
+            .sort({ createdAt: -1 }) 
+            .limit(6)
+            .select('academic_sem_label academic_year total_claim_amount total_claim_count');
+        const trends = academicRecords.reverse().map(record => ({
+            label: record.academic_sem_label,
+            year: record.academic_year,
+            amount: record.total_claim_amount || 0,
+            count: record.total_claim_count || 0
+        }));
+        res.status(200).json(trends);
+    } catch (error) {
+        console.error('Error fetching academic trends : ', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+// -----------------------------------------------------------------------------------------------------------------
+
+module.exports = { totalClaimsCount, staffsCount, getCreditedClaims, getSubmittedClaims, getPendingClaims, getAwaitingClaims, getInternalExternalClaims, getClaimTypeAmounts, getAcademicTrends };
