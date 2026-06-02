@@ -35,7 +35,7 @@ const claimManage = require('./routes/claimManageRoutes')
 const claimEntry = require('./routes/claimEntryRoutes')
 const dashboard = require('./routes/dashboardRoutes')
 const academicManage = require('./routes/academicRoutes')
-const financeProcessing = require('./routes/financeProcessRoutes')
+const claimStatus = require('./routes/claimStatusRoutes')
 const dataDeletion = require('./routes/dataDeletionRoutes')
 const claimSubmission = require('./routes/claimSubmissionRoutes')
 const paymentProcess = require('./routes/paymentProcessRoutes')
@@ -61,7 +61,7 @@ app.use('/api/finance', paymentProcess)
 app.use('/api', academicManage);
 app.use('/api', dataDeletion);
 app.use('/api', claimSubmission);
-app.use('/api', financeProcessing);
+app.use('/api', claimStatus);
 
 // -----------------------------------------------------------------------------------------------------------------
 
