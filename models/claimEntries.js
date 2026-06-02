@@ -105,13 +105,19 @@ const claimEntrySchema = new mongoose.Schema({
     // Financial Information
     tds_amount: {
         type: Number,
-        required: true,
+        required: true,                
         default: -1
     },
 
     amount: {
         type: Number,
         required: true
+    },
+
+    course_code:{
+        type: String,
+        default: null,
+        trim: true
     },
 
     // Date Information
