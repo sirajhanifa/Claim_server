@@ -20,7 +20,10 @@ const getBatches = async (req, res) => {
                 $group: {
                     _id: "$payment_report_id",
                     claims: { $push: "$$ROOT" },
-                    count: { $sum: 1 }
+                    count: { $sum: 1 },
+                    processedDates: { $push: "$processed_date" },
+                    submittedDates: { $push: "$submitted_date" },
+                    creditedDates: { $push: "$credited_date" }
                 }
             },
             {
@@ -39,13 +42,33 @@ const getBatches = async (req, res) => {
                                 ]
                             }
                         ]
+                    },
+                    batchDate: {
+                        $switch: {
+                            branches: [
+                                {
+                                    case: { $in: ["Credited", "$claims.status"] },
+                                    then: { $max: "$creditedDates" }
+                                },
+                                {
+                                    case: { $in: ["Submitted", "$claims.status"] },
+                                    then: { $max: "$submittedDates" }
+                                },
+                                {
+                                    case: { $in: ["Processed", "$claims.status"] },
+                                    then: { $max: "$processedDates" }
+                                }
+                            ],
+                            default: null
+                        }
                     }
                 }
             },
-            { $sort: { payment_report_id: -1 } }
+            { $sort: { batchDate: -1 } }
         ]);
         res.json(batches);
     } catch (err) {
+        console.error('Error fetching batches:', err);
         res.status(500).json({ error: "Failed to fetch batches" });
     }
 };

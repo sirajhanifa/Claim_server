@@ -10,7 +10,7 @@ const getActiveSemesterLabel = async () => {
     const activeAcademic = await Academic.findOne({ active_sem: true });
     return activeAcademic ? activeAcademic.academic_sem_label : null;
 };
- 
+
 // -----------------------------------------------------------------------------------------------------------------
 
 const totalClaimsCount = async (req, res) => {
@@ -219,7 +219,7 @@ const getAwaitingClaims = async (req, res) => {
 // -----------------------------------------------------------------------------------------------------------------
 
 const getInternalExternalClaims = async (req, res) => {
-    
+
     try {
 
         const activeSemLabel = await getActiveSemesterLabel();
@@ -311,7 +311,7 @@ const getClaimTypeAmounts = async (req, res) => {
 const getAcademicTrends = async (req, res) => {
     try {
         const academicRecords = await Academic.find()
-            .sort({ createdAt: -1 }) 
+            .sort({ createdAt: -1 })
             .limit(6)
             .select('academic_sem_label academic_year total_claim_amount total_claim_count');
         const trends = academicRecords.reverse().map(record => ({
@@ -329,4 +329,191 @@ const getAcademicTrends = async (req, res) => {
 
 // -----------------------------------------------------------------------------------------------------------------
 
-module.exports = { totalClaimsCount, staffsCount, getCreditedClaims, getSubmittedClaims, getPendingClaims, getAwaitingClaims, getInternalExternalClaims, getClaimTypeAmounts, getAcademicTrends };
+// Add these functions to your existing claimController.js
+
+// -----------------------------------------------------------------------------------------------------------------
+// Get Payment ID Badges (Total, Pending, Finished)
+const getPaymentBadges = async (req, res) => {
+    try {
+        const activeSemLabel = await getActiveSemesterLabel();
+        const matchQuery = activeSemLabel ? { academic_sem_label: activeSemLabel } : {};
+
+        // Get all unique payment_report_id with their statuses
+        const result = await ClaimEntry.aggregate([
+            { $match: { ...matchQuery, payment_report_id: { $ne: null, $ne: "" } } },
+            {
+                $group: {
+                    _id: "$payment_report_id",
+                    status: { $first: "$status" },
+                    totalAmount: { $sum: "$amount" },
+                    claimCount: { $sum: 1 }
+                }
+            }
+        ]);
+
+        let totalBadges = result.length;
+        let pendingBadges = 0;
+        let finishedBadges = 0;
+        let totalAmount = 0;
+        let pendingAmount = 0;
+        let finishedAmount = 0;
+
+        result.forEach(badge => {
+            totalAmount += badge.totalAmount;
+            if (badge.status === 'Submitted') {
+                pendingBadges++;
+                pendingAmount += badge.totalAmount;
+            } else if (badge.status === 'Credited') {
+                finishedBadges++;
+                finishedAmount += badge.totalAmount;
+            }
+        });
+
+        res.status(200).json({
+            totalBadges,
+            totalAmount,
+            pendingBadges,
+            pendingAmount,
+            finishedBadges,
+            finishedAmount
+        });
+    } catch (error) {
+        console.error('Error fetching payment badges:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+// -----------------------------------------------------------------------------------------------------------------
+// Get Payment Table Data (for both admin and staff)
+
+const getPaymentTableData = async (req, res) => {
+
+    try {
+
+        const activeSemLabel = await getActiveSemesterLabel();
+        const matchQuery = activeSemLabel ? { academic_sem_label: activeSemLabel } : {};
+
+        const result = await ClaimEntry.aggregate([
+            {
+                $match: {
+                    ...matchQuery,
+                    payment_report_id: { $ne: null, $ne: "" },
+                    status: "Submitted"
+                }
+            },
+            {
+                $group: {
+                    _id: "$payment_report_id",
+                    claim_type_name: { $first: "$claim_type_name" },
+                    submitted_date: { $first: "$submitted_date" },
+                    amount: { $sum: "$amount" },
+                    bill_count: { $sum: 1 },
+                    status: { $first: "$status" }
+                }
+            },
+            { $sort: { submitted_date: -1 } }
+        ]);
+
+        const currentDate = new Date();
+        const formattedResult = result.map(item => {
+            let daysPending = 0;
+            if (item.submitted_date) {
+                const submittedDate = new Date(item.submitted_date);
+                const diffTime = Math.abs(currentDate - submittedDate);
+                daysPending = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            }
+
+            return {
+                payment_report_id: item._id,
+                claim_type_name: item.claim_type_name,
+                bill_count: item.bill_count,
+                submitted_date: item.submitted_date,
+                amount: item.amount,
+                daysPending: daysPending,
+                status: item.status
+            };
+        });
+        res.status(200).json(formattedResult);
+
+    } catch (error) {
+        console.error('Error fetching payment table data:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+// -----------------------------------------------------------------------------------------------------------------
+
+// Add role-based filter for staff/finance users
+
+const getPaymentTableDataByRole = async (req, res) => {
+
+    try {
+
+        const username = req.user?.username;
+        const role = req.user?.role;
+        const activeSemLabel = await getActiveSemesterLabel();
+
+        let matchQuery = activeSemLabel ? { academic_sem_label: activeSemLabel } : {};
+
+        if (role === 'staff' && username) {
+            matchQuery.staff_name = username;
+        }
+
+        const result = await ClaimEntry.aggregate([
+            { $match: { ...matchQuery, payment_report_id: { $ne: null, $ne: "" } } },
+            {
+                $group: {
+                    _id: "$payment_report_id",
+                    claim_type_name: { $first: "$claim_type_name" },
+                    submitted_date: { $first: "$submitted_date" },
+                    amount: { $sum: "$amount" },
+                    bill_count: { $sum: 1 },
+                    status: { $first: "$status" }
+                }
+            },
+            { $sort: { submitted_date: -1 } }
+        ]);
+
+        const currentDate = new Date();
+        const formattedResult = result.map(item => {
+            let daysPending = 0;
+            if (item.submitted_date && item.status !== 'Credited') {
+                const submittedDate = new Date(item.submitted_date);
+                const diffTime = Math.abs(currentDate - submittedDate);
+                daysPending = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            }
+
+            return {
+                payment_report_id: item._id,
+                claim_type_name: item.claim_type_name,
+                bill_count: item.bill_count,
+                submitted_date: item.submitted_date,
+                amount: item.amount,
+                daysPending: daysPending,
+                status: item.status
+            };
+        });
+        res.status(200).json(formattedResult);
+
+    } catch (error) {
+        console.error('Error fetching payment table data:', error);
+        res.status(500).json({ message: 'Server error' });
+    }
+};
+
+// -----------------------------------------------------------------------------------------------------------------
+
+module.exports = {
+    totalClaimsCount,
+    staffsCount,
+    getCreditedClaims,
+    getSubmittedClaims,
+    getPendingClaims,
+    getAwaitingClaims,
+    getInternalExternalClaims,
+    getClaimTypeAmounts,
+    getAcademicTrends,
+    getPaymentBadges,
+    getPaymentTableData,
+    getPaymentTableDataByRole
+};
