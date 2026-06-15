@@ -329,18 +329,16 @@ const getAcademicTrends = async (req, res) => {
 
 // -----------------------------------------------------------------------------------------------------------------
 
-// Add these functions to your existing claimController.js
-
-// -----------------------------------------------------------------------------------------------------------------
 // Get Payment ID Badges (Total, Pending, Finished)
+
 const getPaymentBadges = async (req, res) => {
+
     try {
+
         const activeSemLabel = await getActiveSemesterLabel();
         const matchQuery = activeSemLabel ? { academic_sem_label: activeSemLabel } : {};
-
-        // Get all unique payment_report_id with their statuses
         const result = await ClaimEntry.aggregate([
-            { $match: { ...matchQuery, payment_report_id: { $ne: null, $ne: "" } } },
+            { $match: { ...matchQuery, payment_report_id: { $ne: null, $ne: "" }, status: { $ne: "Processed" } } },
             {
                 $group: {
                     _id: "$payment_report_id",
@@ -384,6 +382,7 @@ const getPaymentBadges = async (req, res) => {
 };
 
 // -----------------------------------------------------------------------------------------------------------------
+
 // Get Payment Table Data (for both admin and staff)
 
 const getPaymentTableData = async (req, res) => {

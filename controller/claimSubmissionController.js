@@ -204,12 +204,27 @@ const submitClaims = async (req, res) => {
 
         const nextTotalCount = currentTotalCount + 1;
 
-        // FINAL PAYMENT REPORT ID
-        // Example:
-        // SKILLED-A26-03/15
+        // CATEGORY SHORT CODE
+        const categoryMap = {
+            "Internal": "Int",
+            "External": "Ext",
+            "all": "All"
+        };
+        
+        const categoryCode = categoryMap[category] || "Oth";
 
-        const prId =
-            `${claimPrefix}-${shortSemLabel}-${String(nextClaimCount).padStart(2, '0')}/${String(nextTotalCount).padStart(2, '0')}`;
+        // BANK TYPE SHORT CODE
+        const bankTypeMap = {
+            "JMC_IOB": "J",
+            "IOB_OTHERS": "I",
+            "OTHER_BANKS": "O"
+        };
+        
+        const bankCode = bankTypeMap[ifscFilter] || "All";
+
+        // FINAL PAYMENT REPORT ID
+        // Example: CV-A26-IntJ-07/21
+        const prId = `${claimPrefix}-${shortSemLabel}-${categoryCode}${bankCode}-${String(nextClaimCount).padStart(2, '0')}/${String(nextTotalCount).padStart(2, '0')}`;
 
         // UPDATE CLAIMS
 
