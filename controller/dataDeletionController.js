@@ -1,6 +1,7 @@
 const ClaimEntry = require('../models/claimEntries');
 const User = require('../models/user');
 const Academic = require('../models/academic');
+const Staff = require('../models/staff');
 
 // -----------------------------------------------------------------------------------------------------------------
 
@@ -62,9 +63,9 @@ const exportDataByAcademicSemLabel = async (req, res) => {
         if (!academic_sem_label) {
             return res.status(400).json({ message: "Academic semester label is required." });
         }
-
         const claims = await ClaimEntry.find({ academic_sem_label }).lean();
-        res.status(200).json(claims);
+        const staff = await Staff.find().lean();
+        res.status(200).json({ claims, staff });
     } catch (error) {
         res.status(500).json({ message: "Server Error", error: error.message });
     }
