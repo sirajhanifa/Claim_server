@@ -50,7 +50,7 @@ const buildSingleEmailHtml = (name, amount, claimType) => {
                 Confirmation of Successful Claim Credit
             </h3>
             <p style="margin: 0 0 10px 0;">
-                Dear <strong>${safeName}</strong>,
+                Sir/Madam <strong>${safeName}</strong>,
             </p>
             <p style="margin: 0 0 12px 0;">
                 Your claim of <strong>₹${safeAmount}</strong> for 
@@ -84,7 +84,7 @@ const buildCombinedEmailHtml = (name, claims, totalAmount) => {
                 Confirmation of Successful Claims Credit
             </h3>
             <p style="margin: 0 0 10px 0;">
-                Dear <strong>${safeName}</strong>,
+                Sir/Madam <strong>${safeName}</strong>,
             </p>
             <p style="margin: 0 0 10px 0;">
                 We have credited a total of 
@@ -112,7 +112,7 @@ const sendSingleEmail = async (claim) => {
         to: claim.email,
         subject: `Jamal Mohamed College - COE - Notification of Claims Credit`,
         html: buildSingleEmailHtml(claim.staff_name, claim.amount, claim.claim_type_name),
-        text: `Dear ${claim.staff_name},\n\nYour claim of Rs. ${claim.amount} for ${claim.claim_type_name} has been credited.\nRegards,\nController of Examinations\nJamal Mohamed College`
+        text: `Sir/Madam ${claim.staff_name},\n\nYour claim of Rs. ${claim.amount} for ${claim.claim_type_name} has been credited.\nRegards,\nController of Examinations\nJamal Mohamed College`
     };
     for (let attempt = 1; attempt <= 3; attempt++) {
         try {
@@ -165,7 +165,7 @@ const sendGroupedEmails = async (claims) => {
             to: email,
             subject: `Jamal Mohamed College - COE - Notification of Claims Credit`,
             html: buildCombinedEmailHtml(name, claimGroup, totalAmount),
-            text: `Dear ${name},\n\nWe have credited a total of Rs. ${totalAmount} to your bank account for the following claims :\n${claimGroup.map(c => `- ${c.claim_type_name}: Rs. ${c.amount}`).join('\n')}\nRegards,\nController of Examinations\nJamal Mohamed College`
+            text: `Sir/Madam ${name},\n\nWe have credited a total of Rs. ${totalAmount} to your bank account for the following claims :\n${claimGroup.map(c => `- ${c.claim_type_name}: Rs. ${c.amount}`).join('\n')}\nRegards,\nController of Examinations\nJamal Mohamed College`
         };
 
         let success = false;
